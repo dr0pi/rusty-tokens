@@ -2,6 +2,8 @@ use super::{Token, Scope};
 use std::collections::HashSet;
 use chrono::naive::datetime::NaiveDateTime;
 
+use client::credentials::CredentialsError;
+
 pub mod credentials;
 
 // #[cfg(feature = "hyper")]
@@ -61,22 +63,4 @@ pub enum TokenError {
         message: String,
     },
     CredentialsProblem(CredentialsError),
-}
-
-
-// Do not derive debug!
-pub struct Credentials {
-    pub id: String,
-    pub secret: String,
-}
-
-pub trait CredentialsProvider {
-    fn get_credentials(&self) -> Result<Credentials, CredentialsError>;
-}
-
-#[derive(Clone, Debug)]
-pub enum CredentialsError {
-    UnknownError {
-        message: String,
-    },
 }
