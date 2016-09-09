@@ -81,7 +81,7 @@ Before making a contribution, please let us know by posting a comment to the rel
 
 ## Coding Conventions
 
-Nothing special but run ```rustfmt``` before submitting code.
+Nothing special but run ```rustfmt```(with default settings) before submitting code.
 
 ## License
 
