@@ -73,7 +73,7 @@ You can run an example with ```cargo run --example <example-name-here>```
 - [ ] Implement the client side
 
 
-## Contributing
+## Contributing(We need your help!)
 
 We accept contributions from the open-source community. Please see the [issue tracker](https://example.com) for things to work on.
 
