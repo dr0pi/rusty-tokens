@@ -27,11 +27,11 @@ pub trait AuthorizationServer {
     fn authenticate(&self, token: &Token) -> Result<AuthenticatedUser, AuthorizationServerError>;
 }
 
-/// An id that identifies a user
+/// An id that uniquely identifies the owner of a resource
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
-pub struct UserId(String);
+pub struct Uid(String);
 
-impl fmt::Display for UserId {
+impl fmt::Display for Uid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -40,7 +40,7 @@ impl fmt::Display for UserId {
 /// Once a user has been authenticated this struct can be used for authorization.
 #[derive(PartialEq, Debug)]
 pub struct AuthenticatedUser {
-    pub uid: Option<UserId>,
+    pub uid: Option<Uid>,
     pub scopes: HashSet<Scope>,
 }
 
@@ -52,7 +52,7 @@ impl AuthenticatedUser {
             hs.insert(Scope::from_str(sc));
         }
         AuthenticatedUser {
-            uid: Some(UserId(uid.to_string())),
+            uid: Some(Uid(uid.to_string())),
             scopes: hs,
         }
     }
@@ -84,7 +84,10 @@ impl AuthenticatedUser {
         if self.has_scope(scope) {
             Ok(())
         } else {
-            let uid_part = self.uid.unwrap_or(UserId("[None]".to_string()));
+            let uid_part = match self.uid {
+                Some(Uid(ref uid)) => uid.clone(),
+                None => "None".to_string(),
+            };
             Err(NotAuthorized {
                 message: format!("User with uid {} does not have the scope {}",
                                  uid_part,
@@ -109,7 +112,7 @@ impl Decodable for AuthenticatedUser {
                 })
             }));
             Ok(AuthenticatedUser {
-                uid: Some(UserId(uid)),
+                uid: Some(Uid(uid)),
                 scopes: scopes,
             })
         })
@@ -209,7 +212,7 @@ mod test {
         scopes.insert(Scope::from_str("uid"));
         scopes.insert(Scope::from_str("cn"));
         let expected = AuthenticatedUser {
-            uid: Some(UserId("my_app".to_string())),
+            uid: Some(Uid("my_app".to_string())),
             scopes: scopes,
         };
 
@@ -228,7 +231,7 @@ mod test {
         let mut scopes = HashSet::new();
         scopes.insert(Scope::from_str("uid"));
         let expected = AuthenticatedUser {
-            uid: Some(UserId("my_app".to_string())),
+            uid: Some(Uid("my_app".to_string())),
             scopes: scopes,
         };
 
@@ -245,7 +248,7 @@ mod test {
         \"uid\":\"my_app\"}";
 
         let expected = AuthenticatedUser {
-            uid: Some(UserId("my_app".to_string())),
+            uid: Some(Uid("my_app".to_string())),
             scopes: HashSet::new(),
         };
 
