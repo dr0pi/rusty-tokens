@@ -1,4 +1,9 @@
 
+mod static_provider;
+
+pub use self::static_provider::StaticCredentialsProvider;
+
+#[derive(Clone, Debug)]
 pub struct Credentials {
     id: String,
     secret: String,
@@ -10,7 +15,5 @@ pub trait CredentialsProvider {
 
 #[derive(Clone, Debug)]
 pub enum CredentialsError {
-    UnknownError {
-        message: String,
-    },
+    UnknownError { message: String },
 }
