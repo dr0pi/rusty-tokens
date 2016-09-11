@@ -199,7 +199,7 @@ impl Error for AuthorizationServerError {
 mod test {
     use std::collections::HashSet;
     use rustc_serialize::json;
-    use ::resource_server::{AuthenticatedUser, UserId};
+    use ::resource_server::{AuthenticatedUser, Uid};
     use ::Scope;
     #[test]
     fn an_authenticated_user_should_be_parsed_from_full_token_info_with_many_scopes() {

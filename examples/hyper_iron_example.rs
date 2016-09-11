@@ -25,7 +25,7 @@ fn main() {
 
     let hyper_client = hyper::Client::new();
 
-    let authorization_server = hyperserver::AuthorizationHyperServer::from_env(hyper_client)
+    let authorization_server = resource_server::AuthorizationHyperServer::from_env(hyper_client)
         .unwrap();
 
     let mut chain = Chain::new(handle);
