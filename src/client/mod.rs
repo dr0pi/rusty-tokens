@@ -56,11 +56,9 @@ pub trait TokenProvider {
     fn get_token(&self, name: &str) -> Result<Token, TokenError>;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum TokenError {
     NoToken,
-    InternalProblem {
-        message: String,
-    },
+    InternalProblem { message: String },
     CredentialsProblem(CredentialsError),
 }
