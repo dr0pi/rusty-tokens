@@ -48,8 +48,36 @@ fn parse_client_json(to_parse: &str) -> Result<Credentials, CredentialsError> {
 }
 
 
-#[derive(RustcDecodable)]
+#[derive(RustcDecodable, PartialEq, Debug)]
 struct ClientCredentials {
     client_id: String,
     client_secret: String,
+}
+
+#[test]
+fn must_parse_client_credentials() {
+    let expected = ClientCredentials {
+        client_id: String::from("id"),
+        client_secret: String::from("secret"),
+    };
+
+    let sample = "{\"client_id\": \"id\", \"client_secret\": \"secret\"}";
+
+    let parsed_sample = json::decode::<ClientCredentials>(sample).unwrap();
+
+    assert_eq!(expected, parsed_sample);
+}
+
+#[test]
+fn must_parse_to_credentials() {
+    let expected = Credentials {
+        id: String::from("id"),
+        secret: String::from("secret"),
+    };
+
+    let sample = "{\"client_id\": \"id\", \"client_secret\": \"secret\"}";
+
+    let parsed_sample = parse_client_json(sample).unwrap();
+
+    assert_eq!(expected, parsed_sample);
 }

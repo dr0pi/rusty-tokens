@@ -10,7 +10,7 @@ mod file_credentials_provider;
 pub use self::static_provider::StaticCredentialsProvider;
 pub use self::file_credentials_provider::ClientFileCredentialsProvider;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Credentials {
     id: String,
     secret: String,
@@ -23,7 +23,9 @@ pub trait CredentialsProvider {
 #[derive(Debug)]
 pub enum CredentialsError {
     IoError(io::Error),
-    DecodingError { message: String },
+    DecodingError {
+        message: String,
+    },
 }
 
 impl From<io::Error> for CredentialsError {
