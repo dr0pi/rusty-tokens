@@ -1,20 +1,19 @@
 use super::{Token, Scope};
 use std::collections::HashSet;
-use std::time::Instant;
 
 use client::credentials::CredentialsError;
 
 pub mod credentials;
 
-// #[cfg(feature = "hyper")]
-// mod hypertokenmanager;
-//
-// #[cfg(feature = "hyper")]
-// pub use client::hypertokenmanager::HyperTokenProvider;
-//
-// #[cfg(feature = "hyper")]
-// pub use client::hypertokenmanager::HyperTokenProviderConfig;
-//
+#[cfg(feature = "hyper")]
+mod hypertokenmanager;
+
+#[cfg(feature = "hyper")]
+pub use client::hypertokenmanager::HyperTokenManager;
+
+#[cfg(feature = "hyper")]
+pub use client::hypertokenmanager::HyperTokenManagerConfig;
+
 pub struct ManagedToken {
     pub name: String,
     pub scopes: HashSet<Scope>,
@@ -45,20 +44,18 @@ impl ManagedToken {
     }
 }
 
-#[derive(Clone, Debug)]
-struct AccessToken {
-    token: Token,
-    issued_at: Instant,
-    valid_until: Instant,
+pub type TokenResult = Result<Token, TokenError>;
+
+pub trait TokenManager {
+    fn get_token(&self, name: &str) -> TokenResult;
+    fn stop(&self);
 }
 
-pub trait TokenProvider {
-    fn get_token(&self, name: &str) -> Result<Token, TokenError>;
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TokenError {
     NoToken,
-    InternalProblem { message: String },
+    InternalProblem {
+        message: String,
+    },
     CredentialsProblem(CredentialsError),
 }
