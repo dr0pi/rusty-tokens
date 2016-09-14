@@ -1,6 +1,6 @@
 use super::{Token, Scope};
 use std::collections::HashSet;
-use chrono::naive::datetime::NaiveDateTime;
+use std::time::Instant;
 
 use client::credentials::CredentialsError;
 
@@ -48,8 +48,8 @@ impl ManagedToken {
 #[derive(Clone, Debug)]
 struct AccessToken {
     token: Token,
-    issued_at: NaiveDateTime,
-    valid_until: NaiveDateTime,
+    issued_at: Instant,
+    valid_until: Instant,
 }
 
 pub trait TokenProvider {

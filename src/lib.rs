@@ -10,8 +10,6 @@ extern crate iron;
 #[cfg(feature = "iron")]
 extern crate http_error_object;
 
-extern crate chrono;
-
 use std::convert::From;
 use std::error::Error;
 use std::fmt;

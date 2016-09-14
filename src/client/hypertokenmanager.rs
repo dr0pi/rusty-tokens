@@ -3,7 +3,6 @@ use {Token, InitializationError};
 use super::{TokenError, TokenProvider, ManagedToken, CredentialsProvider};
 use std::sync::{Arc, RwLock};
 use hyper;
-use chrono::naive::datetime::NaiveDateTime;
 
 pub struct HyperTokenProviderConfig<T: CredentialsProvider> {
     url: String,
