@@ -39,7 +39,15 @@ fn manager_loop(manager: HyperTokenManager,
                 conf: HyperTokenManagerConfig) {
 
     info!("Manager loop started.");
+    loop {
 
+        let stop = manager.stop_requested.read().unwrap();
+        if *stop {
+            break;
+        }
+        thread::sleep(conf.update_interval);
+    }
+    info!("Manager loop stopped.");
 }
 
 fn query_token(managed_token: &ManagedToken,
