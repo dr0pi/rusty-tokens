@@ -1,13 +1,18 @@
+use std::fmt;
 use std::error::Error;
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 use std::time::Duration;
-use {Token, InitializationError};
+use chrono::NaiveDateTime;
+use {Token, Scope, InitializationError};
 use super::{TokenError, TokenManager, ManagedToken, TokenResult};
 use client::credentials::Credentials;
 
 
 mod manager_loop;
+
+#[cfg(feature = "hyper")]
+pub mod hypertokenmanager;
 
 
 pub struct SelfUpdatingTokenManagerConfig {
@@ -17,10 +22,8 @@ pub struct SelfUpdatingTokenManagerConfig {
 
 pub struct AccessToken {
     token: Token,
-}
-
-pub struct RequestAccessTokenError {
-    message: String,
+    issued_at: NaiveDateTime,
+    valid_until: NaiveDateTime,
 }
 
 pub type RequestAccessTokenResult = Result<AccessToken, RequestAccessTokenError>;
@@ -36,7 +39,7 @@ impl SelfUpdatingTokenManager {
     pub fn new<T>(conf: SelfUpdatingTokenManagerConfig,
                   request_access_token: Box<T>)
                   -> Result<SelfUpdatingTokenManager, InitializationError>
-        where T: FnOnce(&ManagedToken, &Credentials) -> RequestAccessTokenResult + Send + 'static
+        where T: Fn(&Vec<Scope>, &Credentials) -> RequestAccessTokenResult + Send + 'static
     {
         let provider = SelfUpdatingTokenManager {
             token_state: Arc::new(RwLock::new(HashMap::new())),
@@ -54,7 +57,7 @@ impl SelfUpdatingTokenManager {
 impl TokenManager for SelfUpdatingTokenManager {
     fn get_token(&self, name: &str) -> TokenResult {
         match self.token_state.read() {
-            Err(err) => Err(TokenError::InternalProblem { message: err.description().to_string() }),
+            Err(err) => Err(TokenError::InternalError(err.description().to_string())),
             Ok(lock) => {
                 let the_map = lock;
                 match the_map.get(name) {
@@ -69,5 +72,52 @@ impl TokenManager for SelfUpdatingTokenManager {
         info!("Stop requested.");
         let mut stop = self.stop_requested.write().unwrap();
         *stop = true;
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum RequestAccessTokenError {
+    InternalError(String),
+    ConnectionError(String),
+    RequestError { status: u16, body: String },
+    InvalidCredentials(String),
+    ParsingError(String),
+}
+
+impl fmt::Display for RequestAccessTokenError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            RequestAccessTokenError::InternalError(ref message) => {
+                write!(f, "InternalError: {}", message)
+            }
+            RequestAccessTokenError::ConnectionError(ref message) => {
+                write!(f, "NotAuthenticated: {}", message)
+            }
+            RequestAccessTokenError::RequestError { ref status, ref body } => {
+                write!(f, "A request failed with status code{}: {}", status, body)
+            }
+            RequestAccessTokenError::InvalidCredentials(ref message) => {
+                write!(f, "InvalidCredentials: {}", message)
+            }
+            RequestAccessTokenError::ParsingError(ref message) => {
+                write!(f, "ParsingError: {}", message)
+            }
+        }
+    }
+}
+
+impl Error for RequestAccessTokenError {
+    fn description(&self) -> &str {
+        match *self {
+            RequestAccessTokenError::InternalError(ref message) => message.as_ref(),
+            RequestAccessTokenError::ConnectionError(ref message) => message.as_ref(),
+            RequestAccessTokenError::RequestError { ref status, ref body } => "A request failed",
+            RequestAccessTokenError::InvalidCredentials(ref message) => message.as_ref(),
+            RequestAccessTokenError::ParsingError(ref message) => message.as_ref(),
+        }
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        None
     }
 }
