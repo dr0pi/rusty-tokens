@@ -16,15 +16,13 @@ pub use client::implementation::hypertokenmanager::HyperTokenManager;
 pub struct ManagedToken {
     pub name: String,
     pub scopes: Vec<Scope>,
-    pub credentials_provider: Box<credentials::CredentialsProvider>,
 }
 
 impl ManagedToken {
-    pub fn new(name: String, credentials_provider: Box<credentials::CredentialsProvider>) -> Self {
+    pub fn new(name: String) -> Self {
         ManagedToken {
             name: name,
             scopes: Vec::new(),
-            credentials_provider: credentials_provider,
         }
     }
 

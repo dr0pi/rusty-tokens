@@ -6,7 +6,7 @@ use std::time::Duration;
 use chrono::NaiveDateTime;
 use {Token, Scope, InitializationError};
 use super::{TokenError, TokenManager, ManagedToken, TokenResult};
-use client::credentials::Credentials;
+use client::credentials::{Credentials, CredentialsProvider};
 
 
 mod manager_loop;
@@ -16,7 +16,8 @@ pub mod hypertokenmanager;
 
 
 pub struct SelfUpdatingTokenManagerConfig {
-    pub update_interval: Duration,
+    pub refresh_percentage_threshold: f32,
+    pub warning_percentage_threshold: f32,
     pub managed_tokens: Vec<ManagedToken>,
 }
 
@@ -29,10 +30,10 @@ pub struct AccessToken {
 pub type RequestAccessTokenResult = Result<AccessToken, RequestAccessTokenError>;
 
 pub trait AccessTokenProvider {
-    fn request_access_token(&self,
-                            scopes: &Vec<Scope>,
-                            credentials: &Credentials)
-                            -> RequestAccessTokenResult;
+    fn get_access_token(&self,
+                        scopes: &Vec<Scope>,
+                        credentials: &Credentials)
+                        -> RequestAccessTokenResult;
 }
 
 #[derive(Clone)]
@@ -42,19 +43,21 @@ pub struct SelfUpdatingTokenManager {
 }
 
 impl SelfUpdatingTokenManager {
-    pub fn new<T>(conf: SelfUpdatingTokenManagerConfig,
-                  access_token_provider: T)
-                  -> Result<SelfUpdatingTokenManager, InitializationError>
-        where T: AccessTokenProvider + Send + 'static
+    pub fn new<T, U>(conf: SelfUpdatingTokenManagerConfig,
+                     credentials_provider: U,
+                     access_token_provider: T)
+                     -> Result<SelfUpdatingTokenManager, InitializationError>
+        where T: AccessTokenProvider + Send + 'static,
+              U: CredentialsProvider + Send + 'static
     {
         let provider = SelfUpdatingTokenManager {
             token_state: Arc::new(RwLock::new(HashMap::new())),
             stop_requested: Arc::new(RwLock::new(false)),
         };
         try!{manager_loop::start_manager(provider.token_state.clone(),
-                      conf.managed_tokens,
+                      credentials_provider,
                       access_token_provider,
-                      conf.update_interval,
+                      conf,
                       provider.stop_requested.clone())};
         Ok(provider)
     }
