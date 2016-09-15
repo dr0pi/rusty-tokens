@@ -16,18 +16,24 @@ pub mod hypertokenmanager;
 
 
 pub struct SelfUpdatingTokenManagerConfig {
-    update_interval: Duration,
-    managed_tokens: Vec<ManagedToken>,
+    pub update_interval: Duration,
+    pub managed_tokens: Vec<ManagedToken>,
 }
 
 pub struct AccessToken {
-    token: Token,
-    issued_at: NaiveDateTime,
-    valid_until: NaiveDateTime,
+    pub token: Token,
+    pub issued_at: NaiveDateTime,
+    pub valid_until: NaiveDateTime,
 }
 
 pub type RequestAccessTokenResult = Result<AccessToken, RequestAccessTokenError>;
 
+pub trait AccessTokenProvider {
+    fn request_access_token(&self,
+                            scopes: &Vec<Scope>,
+                            credentials: &Credentials)
+                            -> RequestAccessTokenResult;
+}
 
 #[derive(Clone)]
 pub struct SelfUpdatingTokenManager {
@@ -37,9 +43,9 @@ pub struct SelfUpdatingTokenManager {
 
 impl SelfUpdatingTokenManager {
     pub fn new<T>(conf: SelfUpdatingTokenManagerConfig,
-                  request_access_token: Box<T>)
+                  access_token_provider: T)
                   -> Result<SelfUpdatingTokenManager, InitializationError>
-        where T: Fn(&Vec<Scope>, &Credentials) -> RequestAccessTokenResult + Send + 'static
+        where T: AccessTokenProvider + Send + 'static
     {
         let provider = SelfUpdatingTokenManager {
             token_state: Arc::new(RwLock::new(HashMap::new())),
@@ -47,7 +53,7 @@ impl SelfUpdatingTokenManager {
         };
         try!{manager_loop::start_manager(provider.token_state.clone(),
                       conf.managed_tokens,
-                      request_access_token,
+                      access_token_provider,
                       conf.update_interval,
                       provider.stop_requested.clone())};
         Ok(provider)
@@ -111,7 +117,7 @@ impl Error for RequestAccessTokenError {
         match *self {
             RequestAccessTokenError::InternalError(ref message) => message.as_ref(),
             RequestAccessTokenError::ConnectionError(ref message) => message.as_ref(),
-            RequestAccessTokenError::RequestError { ref status, ref body } => "A request failed",
+            RequestAccessTokenError::RequestError { .. } => "A request failed",
             RequestAccessTokenError::InvalidCredentials(ref message) => message.as_ref(),
             RequestAccessTokenError::ParsingError(ref message) => message.as_ref(),
         }
