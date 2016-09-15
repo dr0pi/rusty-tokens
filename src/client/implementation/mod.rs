@@ -2,42 +2,56 @@ use std::error::Error;
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 use std::time::Duration;
-use InitializationError;
+use {Token, InitializationError};
 use super::{TokenError, TokenManager, ManagedToken, TokenResult};
-use hyper;
+use client::credentials::Credentials;
 
 
 mod manager_loop;
 
-pub struct HyperTokenManagerConfig {
-    url: String,
+
+pub struct SelfUpdatingTokenManagerConfig {
     update_interval: Duration,
+    managed_tokens: Vec<ManagedToken>,
 }
 
+pub struct AccessToken {
+    token: Token,
+}
+
+pub struct RequestAccessTokenError {
+    message: String,
+}
+
+pub type RequestAccessTokenResult = Result<AccessToken, RequestAccessTokenError>;
+
+
 #[derive(Clone)]
-pub struct HyperTokenManager {
+pub struct SelfUpdatingTokenManager {
     token_state: Arc<RwLock<HashMap<String, TokenResult>>>,
     stop_requested: Arc<RwLock<bool>>,
 }
 
-impl HyperTokenManager {
-    pub fn new(managed_tokens: Vec<ManagedToken>,
-               http_client: hyper::Client,
-               conf: HyperTokenManagerConfig)
-               -> Result<HyperTokenManager, InitializationError> {
-        let provider = HyperTokenManager {
+impl SelfUpdatingTokenManager {
+    pub fn new<T>(conf: SelfUpdatingTokenManagerConfig,
+                  request_access_token: Box<T>)
+                  -> Result<SelfUpdatingTokenManager, InitializationError>
+        where T: FnOnce(&ManagedToken, &Credentials) -> RequestAccessTokenResult + Send + 'static
+    {
+        let provider = SelfUpdatingTokenManager {
             token_state: Arc::new(RwLock::new(HashMap::new())),
             stop_requested: Arc::new(RwLock::new(false)),
         };
-        try!{manager_loop::start_manager(provider.clone(),
-                      managed_tokens,
-                      http_client,
-                      conf)};
+        try!{manager_loop::start_manager(provider.token_state.clone(),
+                      conf.managed_tokens,
+                      request_access_token,
+                      conf.update_interval,
+                      provider.stop_requested.clone())};
         Ok(provider)
     }
 }
 
-impl TokenManager for HyperTokenManager {
+impl TokenManager for SelfUpdatingTokenManager {
     fn get_token(&self, name: &str) -> TokenResult {
         match self.token_state.read() {
             Err(err) => Err(TokenError::InternalProblem { message: err.description().to_string() }),

@@ -5,14 +5,13 @@ use client::credentials::CredentialsError;
 
 pub mod credentials;
 
-#[cfg(feature = "hyper")]
-mod hypertokenmanager;
+mod implementation;
 
-#[cfg(feature = "hyper")]
-pub use client::hypertokenmanager::HyperTokenManager;
-
-#[cfg(feature = "hyper")]
-pub use client::hypertokenmanager::HyperTokenManagerConfig;
+// #[cfg(feature = "hyper")]
+// pub use client::hypertokenmanager::HyperTokenManager;
+//
+// #[cfg(feature = "hyper")]
+// pub use client::hypertokenmanager::HyperTokenManagerConfig;
 
 pub struct ManagedToken {
     pub name: String,
@@ -54,8 +53,6 @@ pub trait TokenManager {
 #[derive(Debug, Clone)]
 pub enum TokenError {
     NoToken,
-    InternalProblem {
-        message: String,
-    },
+    InternalProblem { message: String },
     CredentialsProblem(CredentialsError),
 }
