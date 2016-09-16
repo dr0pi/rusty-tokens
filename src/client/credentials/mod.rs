@@ -15,8 +15,8 @@ pub type CredentialsResult = Result<Credentials, CredentialsError>;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Credentials {
-    id: String,
-    secret: String,
+    pub id: String,
+    pub secret: String,
 }
 
 pub trait ClientCredentialsProvider: Send {

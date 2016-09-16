@@ -2,18 +2,19 @@ use std::io;
 use std::fs::File;
 use std::io::Read;
 use std::error::Error;
+use std::path::{PathBuf, Path};
 use rustc_serialize::json;
 
 use super::{Credentials, CredentialsError, ClientCredentialsProvider, UserCredentialsProvider,
             CredentialsProvider};
 
 pub struct UserFileCredentialsProvider {
-    path: String,
+    path: PathBuf,
 }
 
 impl UserFileCredentialsProvider {
-    pub fn new(path: String) -> UserFileCredentialsProvider {
-        UserFileCredentialsProvider { path: path }
+    pub fn new(path: &Path) -> UserFileCredentialsProvider {
+        UserFileCredentialsProvider { path: PathBuf::from(path) }
     }
 }
 
@@ -26,12 +27,12 @@ impl UserCredentialsProvider for UserFileCredentialsProvider {
 
 
 pub struct ClientFileCredentialsProvider {
-    path: String,
+    path: PathBuf,
 }
 
 impl ClientFileCredentialsProvider {
-    pub fn new(path: String) -> ClientFileCredentialsProvider {
-        ClientFileCredentialsProvider { path: path }
+    pub fn new(path: &Path) -> ClientFileCredentialsProvider {
+        ClientFileCredentialsProvider { path: PathBuf::from(path) }
     }
 }
 
@@ -48,6 +49,20 @@ pub struct FileCredentialsProvider {
 }
 
 impl FileCredentialsProvider {
+    pub fn new
+        (path: &str,
+         client_filename: &str,
+         user_filename: &str)
+         -> CredentialsProvider<ClientFileCredentialsProvider, UserFileCredentialsProvider> {
+        let mut client_path = PathBuf::from(path);
+        client_path.push(client_filename);
+        let mut user_path = PathBuf::from(path);
+        user_path.push(user_filename);
+
+        FileCredentialsProvider::create(ClientFileCredentialsProvider::new(client_path.as_path()),
+                                        UserFileCredentialsProvider::new(user_path.as_path()))
+    }
+
     pub fn create
         (client_provider: ClientFileCredentialsProvider,
          user_provider: UserFileCredentialsProvider)
@@ -68,7 +83,7 @@ impl UserCredentialsProvider for FileCredentialsProvider {
     }
 }
 
-fn read_credentials_file(path: &str) -> io::Result<String> {
+fn read_credentials_file(path: &Path) -> io::Result<String> {
     let mut file = try!{File::open(path)};
     let mut buffer = String::new();
     try!(file.read_to_string(&mut buffer));
