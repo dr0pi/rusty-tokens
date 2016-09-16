@@ -5,9 +5,9 @@ use rustc_serialize::json::Json;
 
 pub mod planb;
 
-pub enum Header {
+pub enum Header<'a> {
     Registered(RegisteredHeader),
-    Custom(String),
+    Custom(&'a str),
 }
 
 pub enum RegisteredHeader {
@@ -26,9 +26,9 @@ impl RegisteredHeader {
     }
 }
 
-pub enum Claim {
+pub enum Claim<'a> {
     Registered(RegisteredClaim),
-    Custom(String),
+    Custom(&'a str),
 }
 
 #[derive(PartialEq, Eq, Debug, Hash)]
@@ -73,7 +73,7 @@ impl JsonWebToken {
         let mut x = self;
         let tag: String = match *header {
             Header::Registered(ref key) => String::from(key.to_key()),
-            Header::Custom(ref key) => key.clone(),
+            Header::Custom(ref key) => key.to_string(),
         };
         x.header.insert(tag, value);
         x
@@ -87,7 +87,7 @@ impl JsonWebToken {
     pub fn get_header(&self, header: &Header) -> Option<&Json> {
         match *header {
             Header::Registered(ref header) => self.header.get(header.to_key()),
-            Header::Custom(ref key) => self.payload.get(key),
+            Header::Custom(key) => self.payload.get(key),
         }
     }
 
@@ -96,7 +96,7 @@ impl JsonWebToken {
         let mut x = self;
         let tag: String = match *for_claim {
             Claim::Registered(ref rclaim) => String::from(rclaim.to_key()),
-            Claim::Custom(ref key) => key.clone(),
+            Claim::Custom(ref key) => key.to_string(),
         };
         x.payload.insert(tag, value);
         x
@@ -109,7 +109,7 @@ impl JsonWebToken {
     pub fn get_payload(&self, for_claim: &Claim) -> Option<&Json> {
         match *for_claim {
             Claim::Registered(ref rclaim) => self.payload.get(rclaim.to_key()),
-            Claim::Custom(ref key) => self.payload.get(key),
+            Claim::Custom(key) => self.payload.get(key),
         }
     }
 }

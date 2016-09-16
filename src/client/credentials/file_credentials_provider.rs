@@ -4,7 +4,26 @@ use std::io::Read;
 use std::error::Error;
 use rustc_serialize::json;
 
-use super::{Credentials, CredentialsError, CredentialsProvider};
+use super::{Credentials, CredentialsError, ClientCredentialsProvider, UserCredentialsProvider,
+            CredentialsProvider};
+
+pub struct UserFileCredentialsProvider {
+    path: String,
+}
+
+impl UserFileCredentialsProvider {
+    pub fn new(path: String) -> UserFileCredentialsProvider {
+        UserFileCredentialsProvider { path: path }
+    }
+}
+
+impl UserCredentialsProvider for UserFileCredentialsProvider {
+    fn get_user_credentials(&self) -> Result<Credentials, CredentialsError> {
+        let file_content = try!{read_credentials_file(&self.path)};
+        parse_user_json(&file_content)
+    }
+}
+
 
 pub struct ClientFileCredentialsProvider {
     path: String,
@@ -16,10 +35,36 @@ impl ClientFileCredentialsProvider {
     }
 }
 
-impl CredentialsProvider for ClientFileCredentialsProvider {
-    fn get_credentials(&self) -> Result<Credentials, CredentialsError> {
+impl ClientCredentialsProvider for ClientFileCredentialsProvider {
+    fn get_client_credentials(&self) -> Result<Credentials, CredentialsError> {
         let file_content = try!{read_credentials_file(&self.path)};
         parse_client_json(&file_content)
+    }
+}
+
+pub struct FileCredentialsProvider {
+    client_provider: ClientFileCredentialsProvider,
+    user_provider: UserFileCredentialsProvider,
+}
+
+impl FileCredentialsProvider {
+    pub fn create
+        (client_provider: ClientFileCredentialsProvider,
+         user_provider: UserFileCredentialsProvider)
+         -> CredentialsProvider<ClientFileCredentialsProvider, UserFileCredentialsProvider> {
+        CredentialsProvider::new(client_provider, user_provider)
+    }
+}
+
+impl ClientCredentialsProvider for FileCredentialsProvider {
+    fn get_client_credentials(&self) -> Result<Credentials, CredentialsError> {
+        self.client_provider.get_client_credentials()
+    }
+}
+
+impl UserCredentialsProvider for FileCredentialsProvider {
+    fn get_user_credentials(&self) -> Result<Credentials, CredentialsError> {
+        self.user_provider.get_user_credentials()
     }
 }
 
@@ -29,7 +74,6 @@ fn read_credentials_file(path: &str) -> io::Result<String> {
     try!(file.read_to_string(&mut buffer));
     Ok(buffer)
 }
-
 
 fn parse_client_json(to_parse: &str) -> Result<Credentials, CredentialsError> {
     match json::decode::<ClientCredentials>(to_parse) {
@@ -47,11 +91,33 @@ fn parse_client_json(to_parse: &str) -> Result<Credentials, CredentialsError> {
     }
 }
 
+fn parse_user_json(to_parse: &str) -> Result<Credentials, CredentialsError> {
+    match json::decode::<UserCredentials>(to_parse) {
+        Err(json_decode_error) => {
+            Err(CredentialsError::DecodingError {
+                message: json_decode_error.description().to_string(),
+            })
+        }
+        Ok(user_credentials) => {
+            Ok(Credentials {
+                id: user_credentials.user_id,
+                secret: user_credentials.user_secret,
+            })
+        }
+    }
+}
+
 
 #[derive(RustcDecodable, PartialEq, Debug)]
 struct ClientCredentials {
     client_id: String,
     client_secret: String,
+}
+
+#[derive(RustcDecodable, PartialEq, Debug)]
+struct UserCredentials {
+    user_id: String,
+    user_secret: String,
 }
 
 #[test]

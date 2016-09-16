@@ -1,6 +1,6 @@
 use hyper;
 use {InitializationError, Scope};
-use client::credentials::{Credentials, CredentialsProvider};
+use client::credentials::{Credentials, UserCredentialsProvider, ClientCredentialsProvider};
 use super::{SelfUpdatingTokenManager, SelfUpdatingTokenManagerConfig, AccessTokenProvider,
             RequestAccessTokenResult};
 
@@ -12,7 +12,7 @@ impl HyperTokenManager {
               credentials_provider: U,
               url: String)
               -> Result<SelfUpdatingTokenManager, InitializationError>
-        where U: CredentialsProvider + Send + 'static
+        where U: ClientCredentialsProvider + UserCredentialsProvider + Send + 'static
     {
         let acccess_token_provider = HyperAccessTokenProvider {
             client: http_client,
@@ -29,8 +29,9 @@ struct HyperAccessTokenProvider {
 
 impl AccessTokenProvider for HyperAccessTokenProvider {
     fn get_access_token(&self,
-                        scopes: &Vec<Scope>,
-                        credentials: &Credentials)
+                        scopes: &[Scope],
+                        client_credentials: &Credentials,
+                        user_credentials: &Credentials)
                         -> RequestAccessTokenResult {
         panic!("")
     }
