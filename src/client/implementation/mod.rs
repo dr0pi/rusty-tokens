@@ -88,7 +88,10 @@ impl TokenManager for SelfUpdatingTokenManager {
 pub enum RequestAccessTokenError {
     InternalError(String),
     ConnectionError(String),
-    RequestError { status: u16, body: String },
+    RequestError {
+        status: u16,
+        body: String,
+    },
     InvalidCredentials(String),
     ParsingError(String),
 }

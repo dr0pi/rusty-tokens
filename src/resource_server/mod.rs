@@ -146,13 +146,21 @@ impl Error for NotAuthorized {
 #[derive(Debug)]
 pub enum AuthorizationServerError {
     /// The Token was really unauthenticated
-    NotAuthenticated { message: String },
+    NotAuthenticated {
+        message: String,
+    },
     /// The token received from am AuthorizationServer was not parsable
-    TokenInfoUnparsable { message: String },
+    TokenInfoUnparsable {
+        message: String,
+    },
     /// Failed to connect to a remote AuthorizationServer
-    Connection { message: String },
+    Connection {
+        message: String,
+    },
     /// Something else happened
-    Unknown { message: String },
+    Unknown {
+        message: String,
+    },
 }
 
 impl fmt::Display for AuthorizationServerError {

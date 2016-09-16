@@ -18,6 +18,7 @@ use std::fmt;
 
 use std::env::VarError;
 
+pub mod jwt_token;
 pub mod client;
 pub mod resource_server;
 

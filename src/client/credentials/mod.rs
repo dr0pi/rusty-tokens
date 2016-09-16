@@ -24,8 +24,12 @@ pub trait CredentialsProvider: Send {
 
 #[derive(Debug, Clone)]
 pub enum CredentialsError {
-    IoError { message: String },
-    DecodingError { message: String },
+    IoError {
+        message: String,
+    },
+    DecodingError {
+        message: String,
+    },
 }
 
 impl From<io::Error> for CredentialsError {
