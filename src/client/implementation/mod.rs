@@ -2,7 +2,6 @@ use std::fmt;
 use std::error::Error;
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
-use std::time::Duration;
 use chrono::NaiveDateTime;
 use {Token, Scope, InitializationError};
 use super::{TokenError, TokenManager, ManagedToken, TokenResult};
