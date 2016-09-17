@@ -94,7 +94,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                         // state_to_update.push((&token_data.token_name, Ok(token.clone())));
                     }
                     Err(err) => {
-                        if token_data.update_latest - 2 > now {
+                        if token_data.valid_until - 2 > now {
                             warn!("Could not update still valid(for at least 2 seconds) token \
                                    {}: {}",
                                   token_data.token_name,
