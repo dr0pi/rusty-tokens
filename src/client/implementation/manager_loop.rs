@@ -7,7 +7,7 @@ use chrono::*;
 use InitializationError;
 use {Token, Scope};
 use client::credentials::{CredentialsPair, CredentialsPairProvider};
-use client::{ManagedToken, TokenResult, TokenError};
+use client::{TokenResult, TokenError};
 use super::{RequestAccessTokenResult, AccessToken, AccessTokenProvider, RequestAccessTokenError,
             SelfUpdatingTokenManagerConfig};
 
@@ -89,6 +89,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                                             conf.warning_percentage_threshold);
                 match res {
                     Ok(()) => {
+                        unimplemented!
                         // let token = &token_data.token.unwrap();
                         // state_to_update.push((&token_data.token_name, Ok(token.clone())));
                     }
@@ -111,13 +112,6 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                 warn!("Token {} becomes to old.", token_data.token_name);
             }
         }
-
-        // for token_data in managed_token_data {
-        //     if token_data.update_latest >= now {
-        //
-        //     }
-        //
-        // }
 
         let stop = match stop_requested.read() {
             Ok(stop) => *stop,
