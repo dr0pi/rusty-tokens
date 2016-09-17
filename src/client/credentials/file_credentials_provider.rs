@@ -115,8 +115,8 @@ fn parse_user_json(to_parse: &str) -> Result<Credentials, CredentialsError> {
         }
         Ok(user_credentials) => {
             Ok(Credentials {
-                id: user_credentials.user_id,
-                secret: user_credentials.user_secret,
+                id: user_credentials.application_username,
+                secret: user_credentials.application_password,
             })
         }
     }
@@ -131,26 +131,12 @@ struct ClientCredentials {
 
 #[derive(RustcDecodable, PartialEq, Debug)]
 struct UserCredentials {
-    user_id: String,
-    user_secret: String,
+    application_username: String,
+    application_password: String,
 }
 
 #[test]
 fn must_parse_client_credentials() {
-    let expected = ClientCredentials {
-        client_id: String::from("id"),
-        client_secret: String::from("secret"),
-    };
-
-    let sample = "{\"client_id\": \"id\", \"client_secret\": \"secret\"}";
-
-    let parsed_sample = json::decode::<ClientCredentials>(sample).unwrap();
-
-    assert_eq!(expected, parsed_sample);
-}
-
-#[test]
-fn must_parse_to_credentials() {
     let expected = Credentials {
         id: String::from("id"),
         secret: String::from("secret"),
@@ -159,6 +145,20 @@ fn must_parse_to_credentials() {
     let sample = "{\"client_id\": \"id\", \"client_secret\": \"secret\"}";
 
     let parsed_sample = parse_client_json(sample).unwrap();
+
+    assert_eq!(expected, parsed_sample);
+}
+
+#[test]
+fn must_parse_user_credentials() {
+    let expected = Credentials {
+        id: String::from("id"),
+        secret: String::from("secret"),
+    };
+
+    let sample = "{\"application_username\": \"id\", \"application_password\": \"secret\"}";
+
+    let parsed_sample = parse_user_json(sample).unwrap();
 
     assert_eq!(expected, parsed_sample);
 }
