@@ -37,7 +37,7 @@ impl HyperAccessTokenProvider {
                             -> RequestAccessTokenResult {
         // execute_http_request()
         // evaluate_response
-        unimplemented!
+        unimplemented!();
     }
 
     fn execute_http_request(&self,
@@ -67,5 +67,5 @@ impl AccessTokenProvider for HyperAccessTokenProvider {
 }
 
 fn evaluate_response(response: Response) -> RequestAccessTokenResult {
-    unimplemented!
+    unimplemented!();
 }

@@ -89,7 +89,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                                             conf.warning_percentage_threshold);
                 match res {
                     Ok(()) => {
-                        unimplemented!
+                        unimplemented!();
                         // let token = &token_data.token.unwrap();
                         // state_to_update.push((&token_data.token_name, Ok(token.clone())));
                     }
