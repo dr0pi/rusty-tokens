@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use chrono::NaiveDateTime;
 use {Token, Scope, InitializationError};
 use super::{TokenError, TokenManager, ManagedToken, TokenResult};
-use client::credentials::{Credentials, ClientCredentialsProvider, UserCredentialsProvider};
+use client::credentials::{CredentialsPair, CredentialsPairProvider};
 
 
 mod manager_loop;
@@ -22,8 +22,8 @@ pub struct SelfUpdatingTokenManagerConfig {
 
 pub struct AccessToken {
     pub token: Token,
-    pub issued_at: NaiveDateTime,
-    pub valid_until: NaiveDateTime,
+    pub issued_at_utc: NaiveDateTime,
+    pub valid_until_utc: NaiveDateTime,
 }
 
 pub type RequestAccessTokenResult = Result<AccessToken, RequestAccessTokenError>;
@@ -31,8 +31,7 @@ pub type RequestAccessTokenResult = Result<AccessToken, RequestAccessTokenError>
 pub trait AccessTokenProvider {
     fn get_access_token(&self,
                         scopes: &[Scope],
-                        client_credentials: &Credentials,
-                        user_credentials: &Credentials)
+                        credentials: &CredentialsPair)
                         -> RequestAccessTokenResult;
 }
 
@@ -48,7 +47,7 @@ impl SelfUpdatingTokenManager {
                      access_token_provider: T)
                      -> Result<SelfUpdatingTokenManager, InitializationError>
         where T: AccessTokenProvider + Send + 'static,
-              U: UserCredentialsProvider + ClientCredentialsProvider + Send + 'static
+              U: CredentialsPairProvider + Send + 'static
     {
         let provider = SelfUpdatingTokenManager {
             token_state: Arc::new(RwLock::new(HashMap::new())),

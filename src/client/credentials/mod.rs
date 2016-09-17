@@ -19,12 +19,29 @@ pub struct Credentials {
     pub secret: String,
 }
 
-pub trait ClientCredentialsProvider: Send {
+pub struct CredentialsPair {
+    pub client_credentials: Credentials,
+    pub user_credentials: Credentials,
+}
+
+pub trait ClientCredentialsProvider {
     fn get_client_credentials(&self) -> CredentialsResult;
 }
 
-pub trait UserCredentialsProvider: Send {
+pub trait UserCredentialsProvider {
     fn get_user_credentials(&self) -> CredentialsResult;
+}
+
+pub trait CredentialsPairProvider
+    : ClientCredentialsProvider + UserCredentialsProvider {
+    fn get_credentials_pair(&self) -> Result<CredentialsPair, CredentialsError> {
+        let client_credentials = try!{self.get_client_credentials()};
+        let user_credentials = try!{self.get_user_credentials()};
+        Ok(CredentialsPair {
+            client_credentials: client_credentials,
+            user_credentials: user_credentials,
+        })
+    }
 }
 
 pub struct CredentialsProvider<C: ClientCredentialsProvider, U: UserCredentialsProvider> {
@@ -54,6 +71,8 @@ impl<C: ClientCredentialsProvider, U: UserCredentialsProvider> ClientCredentials
         self.user_credentials_provider.get_user_credentials()
     }
 }
+
+impl<C: ClientCredentialsProvider, U: UserCredentialsProvider> CredentialsPairProvider for CredentialsProvider<C, U>{}
 
 
 #[derive(Debug, Clone)]

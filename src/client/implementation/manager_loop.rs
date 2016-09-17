@@ -1,19 +1,21 @@
 use std::error::Error;
 use std::collections::HashMap;
-use std::time::{Instant, Duration};
+use std::time::{Instant as TInstant, Duration as TDuration};
 use std::thread;
 use std::sync::{Arc, RwLock};
+use chrono::*;
 use InitializationError;
 use {Token, Scope};
-use client::credentials::{Credentials, UserCredentialsProvider, ClientCredentialsProvider};
+use client::credentials::{CredentialsPair, CredentialsPairProvider};
 use client::{ManagedToken, TokenResult, TokenError};
 use super::{RequestAccessTokenResult, AccessToken, AccessTokenProvider, RequestAccessTokenError,
             SelfUpdatingTokenManagerConfig};
 
 
 struct TokenData {
-    access_token: AccessToken,
-    update_latest: Instant,
+    token: Token,
+    update_latest: i64,
+    warn_after: i64,
 }
 
 
@@ -24,7 +26,7 @@ pub fn start_manager<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult
                            stop_requested: Arc<RwLock<bool>>)
                            -> Result<(), InitializationError>
     where T: AccessTokenProvider + Send + 'static,
-          U: UserCredentialsProvider + ClientCredentialsProvider + Send + 'static
+          U: CredentialsPairProvider + Send + 'static
 {
     info!("Manager loop starting.");
 
@@ -44,7 +46,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                       conf: SelfUpdatingTokenManagerConfig,
                       stop_requested: Arc<RwLock<bool>>)
     where T: AccessTokenProvider + Send + 'static,
-          U: UserCredentialsProvider + ClientCredentialsProvider + Send + 'static
+          U: CredentialsPairProvider + Send + 'static
 {
 
     info!("Manager loop started.");
@@ -60,35 +62,34 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
         if stop {
             break;
         }
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(TDuration::from_secs(1));
     }
 
     info!("Manager loop stopped.");
 }
 
-fn query_token_data<T, U>(managed_token: &ManagedToken,
-                          client_credentials: &Credentials,
-                          user_credentials: &Credentials,
-                          access_token_provider: &T)
-                          -> Result<TokenData, TokenError>
-    where T: AccessTokenProvider,
-          U: UserCredentialsProvider + ClientCredentialsProvider + Send + 'static
-{
-    let access_token = try!{query_access_token(
-        &managed_token.name,
-        &managed_token.scopes,
-        client_credentials,
-        user_credentials,
-        access_token_provider,
-        3,
-        None)};
-    panic!("")
+fn access_token_2_token_data(access_token: AccessToken,
+                             refresh_percentage_threshold: f32,
+                             warning_percentage_threshold: f32)
+                             -> TokenData {
+    let now_utc: i64 = UTC::now().timestamp();
+    let valid_until_utc: i64 = access_token.valid_until_utc.timestamp();
+    let update_latest: i64 = scale_date(now_utc, valid_until_utc, refresh_percentage_threshold);
+    let warn_after: i64 = scale_date(now_utc, valid_until_utc, warning_percentage_threshold);
+    TokenData {
+        token: access_token.token,
+        update_latest: update_latest,
+        warn_after: warn_after,
+    }
+}
+
+fn scale_date(now: i64, later: i64, factor: f32) -> i64 {
+    now + ((later - now) as f64 * factor as f64) as i64
 }
 
 fn query_access_token<T>(managed_token_name: &str,
                          managed_token_scopes: &[Scope],
-                         client_credentials: &Credentials,
-                         user_credentials: &Credentials,
+                         credentials: &CredentialsPair,
                          access_token_provider: &T,
                          attempts_left: u16,
                          last_error: Option<RequestAccessTokenError>)
@@ -103,7 +104,7 @@ fn query_access_token<T>(managed_token_name: &str,
             }
         }
     } else {
-        let result = access_token_provider.get_access_token(managed_token_scopes, client_credentials, user_credentials);
+        let result = access_token_provider.get_access_token(managed_token_scopes, credentials);
         match result {
             Ok(res) => Ok(res),
             Err(err) => {
@@ -112,8 +113,7 @@ fn query_access_token<T>(managed_token_name: &str,
                       err);
                 query_access_token(managed_token_name,
                                    managed_token_scopes,
-                                   client_credentials,
-                                   user_credentials,
+                                   credentials,
                                    access_token_provider,
                                    attempts_left - 1,
                                    Some(err))

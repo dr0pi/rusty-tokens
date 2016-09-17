@@ -2,7 +2,7 @@ use hyper;
 use hyper::header::{Headers, Authorization, Basic};
 use hyper::client::response::Response;
 use {InitializationError, Scope};
-use client::credentials::{Credentials, UserCredentialsProvider, ClientCredentialsProvider};
+use client::credentials::{CredentialsPair, CredentialsPairProvider};
 use super::{SelfUpdatingTokenManager, SelfUpdatingTokenManagerConfig, AccessTokenProvider,
             RequestAccessTokenResult};
 
@@ -15,7 +15,7 @@ impl HyperTokenManager {
                   url: String,
                   realm: String)
                   -> Result<SelfUpdatingTokenManager, InitializationError>
-        where U: ClientCredentialsProvider + UserCredentialsProvider + Send + 'static
+        where U: CredentialsPairProvider + Send + 'static
     {
         let acccess_token_provider = HyperAccessTokenProvider {
             client: http_client,
@@ -33,8 +33,7 @@ struct HyperAccessTokenProvider {
 impl HyperAccessTokenProvider {
     fn request_access_token(&self,
                             scopes: &[Scope],
-                            client_credentials: &Credentials,
-                            user_credentials: &Credentials)
+                            credentials: &CredentialsPair)
                             -> RequestAccessTokenResult {
         // execute_http_request()
         // evaluate_response
@@ -43,17 +42,16 @@ impl HyperAccessTokenProvider {
 
     fn execute_http_request(&self,
                             scopes: &[Scope],
-                            client_credentials: &Credentials,
-                            user_credentials: &Credentials)
+                            credentials: &CredentialsPair)
                             -> hyper::error::Result<Response> {
 
         let grant = format!("grant_type=password&username={}&password={}",
-                            user_credentials.id,
-                            user_credentials.secret);
+                            credentials.user_credentials.id,
+                            credentials.user_credentials.secret);
         let mut headers = Headers::new();
         headers.set(Authorization(Basic {
-            username: client_credentials.id.clone(),
-            password: Some(client_credentials.secret.clone()),
+            username: credentials.client_credentials.id.clone(),
+            password: Some(credentials.client_credentials.secret.clone()),
         }));
         self.client.post(&self.full_url_with_realm).headers(headers).send()
     }
@@ -62,10 +60,9 @@ impl HyperAccessTokenProvider {
 impl AccessTokenProvider for HyperAccessTokenProvider {
     fn get_access_token(&self,
                         scopes: &[Scope],
-                        client_credentials: &Credentials,
-                        user_credentials: &Credentials)
+                        credentials: &CredentialsPair)
                         -> RequestAccessTokenResult {
-        self.request_access_token(scopes, client_credentials, user_credentials)
+        self.request_access_token(scopes, credentials)
     }
 }
 
