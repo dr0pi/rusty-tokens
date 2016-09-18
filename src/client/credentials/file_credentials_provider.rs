@@ -94,7 +94,7 @@ fn parse_client_json(to_parse: &str) -> Result<Credentials, CredentialsError> {
     match json::decode::<ClientCredentials>(to_parse) {
         Err(json_decode_error) => {
             Err(CredentialsError::DecodingError {
-                message: json_decode_error.description().to_string(),
+                message: json_decode_error.description().to_owned(),
             })
         }
         Ok(client_credentials) => {
@@ -110,7 +110,7 @@ fn parse_user_json(to_parse: &str) -> Result<Credentials, CredentialsError> {
     match json::decode::<UserCredentials>(to_parse) {
         Err(json_decode_error) => {
             Err(CredentialsError::DecodingError {
-                message: json_decode_error.description().to_string(),
+                message: json_decode_error.description().to_owned(),
             })
         }
         Ok(user_credentials) => {

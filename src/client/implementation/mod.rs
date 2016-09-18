@@ -65,7 +65,7 @@ impl SelfUpdatingTokenManager {
 impl TokenManager for SelfUpdatingTokenManager {
     fn get_token(&self, name: &str) -> TokenResult {
         match self.token_state.read() {
-            Err(err) => Err(TokenError::InternalError(err.description().to_string())),
+            Err(err) => Err(TokenError::InternalError(err.description().to_owned())),
             Ok(lock) => {
                 let the_map = lock;
                 match the_map.get(name) {

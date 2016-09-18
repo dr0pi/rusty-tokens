@@ -142,7 +142,7 @@ fn parse_json_str_to_json_map(json_str: &str) -> Result<HashMap<String, Json>, S
 }
 
 fn decode_segments(complete: &str) -> Result<(String, String, String), String> {
-    let (header, payload, signature) = try!{split_segments(complete).map_err(|x| x.to_string())};
+    let (header, payload, signature) = try!{split_segments(complete).map_err(|x| x.to_owned())};
     let decoded_header = try!{decode_base_64(header)};
     let decoded_payload = try!{decode_base_64(payload)};
     let decoded_signature = try!{decode_base_64(signature)};

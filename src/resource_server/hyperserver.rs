@@ -83,7 +83,7 @@ impl AuthorizationHyperServer {
                        default env var \"RUSTY_TOKENS_TOKEN_INFO_URL\".");
                 try!{env::var("RUSTY_TOKENS_TOKEN_INFO_URL")}
             }
-            Err(err) => return Err(InitializationError { message: err.description().to_string() }),
+            Err(err) => return Err(InitializationError { message: err.description().to_owned() }),
         };
 
         let fallback_token_info_url = match env::var("RUSTY_TOKENS_FALLBACK_TOKEN_INFO_URL") {
@@ -93,7 +93,7 @@ impl AuthorizationHyperServer {
                        no fallback URL.");
                 None
             }
-            Err(err) => return Err(InitializationError { message: err.description().to_string() }),
+            Err(err) => return Err(InitializationError { message: err.description().to_owned() }),
         };
 
         let query_parameter = try!{env::var("RUSTY_TOKENS_TOKEN_INFO_URL_QUERY_PARAMETER")};
@@ -117,7 +117,7 @@ impl AuthorizationHyperServer {
                                    -> Result<Response, AuthorizationServerError> {
         if attempts_left == 0 {
             Err(AuthorizationServerError::Unknown {
-                message: "No response after multiple retries.".to_string(),
+                message: "No response after multiple retries.".to_owned(),
             })
         } else {
             match self.http_client.get(url).send() {
@@ -129,13 +129,13 @@ impl AuthorizationHyperServer {
                 Err(HError::Uri(parse_error)) => {
                     error!("URI not parsable: {}", parse_error.description());
                     return Err(AuthorizationServerError::NotAuthenticated {
-                        message: "Token could not be validated.".to_string(),
+                        message: "Token could not be validated.".to_owned(),
                     });
                 }
                 Err(err) => {
                     error!("Something bad happened: {}", err.description());
                     return Err(AuthorizationServerError::NotAuthenticated {
-                        message: "Token could not be validated.".to_string(),
+                        message: "Token could not be validated.".to_owned(),
                     });
                 }
             }
@@ -194,14 +194,14 @@ impl AuthorizationServer for AuthorizationHyperServer {
             }
             StatusCode::BadRequest => {
                 Err(AuthorizationServerError::NotAuthenticated {
-                    message: "Token could not be validated.".to_string(),
+                    message: "Token could not be validated.".to_owned(),
                 })
             }
             status_code => {
                 error!("The authorization server answered with status {}.",
                        status_code);
                 Err(AuthorizationServerError::NotAuthenticated {
-                    message: "Token could not be validated.".to_string(),
+                    message: "Token could not be validated.".to_owned(),
                 })
             }
         }
@@ -210,6 +210,6 @@ impl AuthorizationServer for AuthorizationHyperServer {
 
 impl From<HError> for AuthorizationServerError {
     fn from(err: HError) -> Self {
-        AuthorizationServerError::Connection { message: err.description().to_string() }
+        AuthorizationServerError::Connection { message: err.description().to_owned() }
     }
 }

@@ -7,7 +7,7 @@ use chrono::*;
 use InitializationError;
 use {Token, Scope};
 use client::credentials::{CredentialsPair, CredentialsPairProvider};
-use client::{TokenResult, TokenError};
+use client::{TokenResult, TokenError, ManagedToken};
 use super::{RequestAccessTokenResult, AccessToken, AccessTokenProvider, RequestAccessTokenError,
             SelfUpdatingTokenManagerConfig};
 
@@ -42,6 +42,20 @@ pub fn start_manager<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult
     Ok(())
 }
 
+fn initialize(token_data_buffer: &mut Vec<TokenData>, managed_tokens: Vec<ManagedToken>) {
+    let t = UTC::now().timestamp();
+    for managed_token in managed_tokens {
+        token_data_buffer.push(TokenData {
+            token_name: managed_token.name.clone(),
+            token: None,
+            update_latest: t,
+            warn_after: t,
+            valid_until: t,
+            scopes: managed_token.scopes,
+        });
+    }
+}
+
 fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                       credentials_provider: U,
                       access_token_provider: T,
@@ -52,66 +66,35 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
 {
     info!("Manager loop started.");
 
-    let mut managed_token_data = Vec::new();
-    let t = UTC::now().timestamp();
-    for managed_token in conf.managed_tokens {
-        managed_token_data.push(TokenData {
-            token_name: managed_token.name.clone(),
-            token: None,
-            update_latest: t,
-            warn_after: t,
-            valid_until: t,
-            scopes: managed_token.scopes,
-        });
-    }
+    let mut managed_token_data = {
+        let mut v = Vec::new();
+        initialize(&mut v, conf.managed_tokens);
+        v
+    };
 
 
+
+    // let mut token_states_to_update = Vec::new();
     loop {
         let iteration_started = TInstant::now();
-
-        let now = UTC::now().timestamp();
 
         let credentials = match credentials_provider.get_credentials_pair() {
             Ok(creds) => creds,
             Err(err) => {
                 error!("Could not aquire credentials: {}", err);
+                thread::sleep(TDuration::from_secs(1));
                 continue;
             }
         };
 
-        let mut state_to_update: Vec<(&String, TokenResult)> = Vec::new();
-        for token_data in &mut managed_token_data {
-            if token_data.update_latest <= now {
-                let res = update_token_data(token_data,
-                                            &access_token_provider,
-                                            &credentials,
-                                            conf.refresh_percentage_threshold,
-                                            conf.warning_percentage_threshold);
-                match res {
-                    Ok(()) => {
-                        unimplemented!();
-                        // let token = &token_data.token.unwrap();
-                        // state_to_update.push((&token_data.token_name, Ok(token.clone())));
-                    }
-                    Err(err) => {
-                        if token_data.valid_until - 2 > now {
-                            warn!("Could not update still valid(for at least 2 seconds) token \
-                                   {}: {}",
-                                  token_data.token_name,
-                                  err);
-                        } else {
-                            error!("Could not update expired token {}: {}",
-                                   token_data.token_name,
-                                   err);
-                            state_to_update.push((&token_data.token_name, Err(TokenError::RequestError(err))));
-                        }
-                    }
-                }
-            }
-            if token_data.warn_after < now {
-                warn!("Token {} becomes to old.", token_data.token_name);
-            }
-        }
+        // update_all_due_token_data(&mut managed_token_data,
+        //                           &mut token_states_to_update,
+        //                           credentials,
+        //                           &access_token_provider,
+        //                           conf.refresh_percentage_threshold,
+        //                           conf.warning_percentage_threshold);
+
+
 
         let stop = match stop_requested.read() {
             Ok(stop) => *stop,
@@ -129,6 +112,52 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
     }
 
     info!("Manager loop stopped.");
+}
+
+fn update_all_due_token_data<'a, T>(managed_token_data: &'a mut Vec<TokenData>,
+                                    token_states_to_update: &mut Vec<(&'a String, TokenResult)>,
+                                    credentials: CredentialsPair,
+                                    access_token_provider: &T,
+                                    refresh_percentage_threshold: f32,
+                                    warning_percentage_threshold: f32)
+    where T: AccessTokenProvider
+{
+    let now = UTC::now().timestamp();
+
+
+    for token_data in managed_token_data {
+        if token_data.update_latest <= now {
+            let res = update_token_data(token_data,
+                                        access_token_provider,
+                                        &credentials,
+                                        refresh_percentage_threshold,
+                                        warning_percentage_threshold);
+            match res {
+                Ok(()) => {
+                    unimplemented!();
+                    // let token = &token_data.token.unwrap();
+                    // state_to_update.push((&token_data.token_name, Ok(token.clone())));
+                }
+                Err(err) => {
+                    if token_data.valid_until > now {
+                        warn!("Could not update still valid token \
+                               {}: {}",
+                              token_data.token_name,
+                              err);
+                    } else {
+                        error!("Could not update expired token {}: {}",
+                               token_data.token_name,
+                               err);
+                        token_states_to_update.push((&token_data.token_name, Err(TokenError::RequestError(err))));
+                    }
+                }
+            }
+        }
+        if token_data.warn_after < now {
+            warn!("Token {} becomes to old.", token_data.token_name);
+        }
+    }
+
 }
 
 fn update_token_data<T>(token_data: &mut TokenData,

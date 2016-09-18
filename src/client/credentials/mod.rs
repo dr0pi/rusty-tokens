@@ -87,7 +87,7 @@ pub enum CredentialsError {
 
 impl From<io::Error> for CredentialsError {
     fn from(err: io::Error) -> Self {
-        CredentialsError::IoError { message: err.description().to_string() }
+        CredentialsError::IoError { message: err.description().to_owned() }
     }
 }
 
