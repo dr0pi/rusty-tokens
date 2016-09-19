@@ -244,3 +244,6 @@ fn query_access_token<T>(token_data: &TokenData,
         }
     }
 }
+
+#[cfg(test)]
+mod test {}
