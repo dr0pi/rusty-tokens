@@ -93,3 +93,23 @@ impl FromStr for PlanbToken {
         PlanbToken::from_jwt_token(&jwt_token).map_err(|x| String::from(x))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::PlanbToken;
+    use std::str::FromStr;
+    const sample_token: &'static str = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ.\
+                                        eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ.\
+                                        KmDsVB09RAOYwT0Y6E9tdQpg0rAPd8SExYhcZ9tXEO6y9AWX4wBylnmNHVoetWu7MwoexWkaKdpKk09IodMVug";
+
+    #[test]
+    fn parse_the_token() {
+        unimplemented!()
+        // let sample = sample_token;
+        // let expected = PlanbToken {};
+        //
+        // let result = PlanbToken::from_str(sample).unwrap();
+        //
+        // assert_eq!(expected, result);
+    }
+}
