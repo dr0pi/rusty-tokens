@@ -179,3 +179,56 @@ fn decode_base_64(what: &str) -> Result<String, String> {
         try!{String::from_utf8(bytes).map_err(|err| format!("Not a valid UTF-8 String: {}", err))};
     Ok(string)
 }
+
+#[cfg(test)]
+mod test {
+    use jwt;
+
+    const sample_token: &'static str = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ.\
+                                        eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ.\
+                                        KmDsVB09RAOYwT0Y6E9tdQpg0rAPd8SExYhcZ9tXEO6y9AWX4wBylnmNHVoetWu7MwoexWkaKdpKk09IodMVug";
+
+    const sample_header_json: &'static str = "{\"kid\":\"testkey-es256\",\"alg\":\"ES256\"}";
+    const sample_payload_json: &'static str =
+        "{\"sub\":\"test2\",\"scope\":[\"cn\"],\"iss\":\"B\",\"realm\":\"/services\",\"exp\":\
+         1457319814,\"iat\":1457291014}";
+
+    #[test]
+    fn must_decode_base_64_header_to_a_string() {
+        let sample = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ";
+        let result = jwt::decode_base_64(sample).unwrap();
+        assert_eq!(sample_header_json, result);
+    }
+
+    #[test]
+    fn must_decode_base_64_payload_to_a_string() {
+        let sample = "eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ";
+        let result = jwt::decode_base_64(sample).unwrap();
+        assert_eq!(sample_payload_json, result);
+    }
+
+    #[test]
+    fn split_segments_must_work() {
+        let sample = sample_token;
+        let expected = ("eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ",
+                        "eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ",
+                        "KmDsVB09RAOYwT0Y6E9tdQpg0rAPd8SExYhcZ9tXEO6y9AWX4wBylnmNHVoetWu7MwoexWkaKdpKk09IodMVug");
+
+        let result = jwt::split_segments(sample).unwrap();
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn decode_segments_must_work() {
+        let sample = sample_token;
+        let expected = (sample_header_json.to_owned(),
+                        sample_payload_json.to_owned(),
+                        "KmDsVB09RAOYwT0Y6E9tdQpg0rAPd8SExYhcZ9tXEO6y9AWX4wBylnmNHVoetWu7MwoexWkaKdpKk09IodMVug".to_owned());
+
+        let result = jwt::decode_segments(sample).unwrap();
+
+        assert_eq!(expected, result);
+    }
+
+}
