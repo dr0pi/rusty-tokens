@@ -70,6 +70,7 @@ impl RegisteredClaim {
     }
 }
 
+#[derive(PartialEq, Debug)]
 pub struct JsonWebToken {
     pub header: HashMap<String, Json>,
     pub payload: HashMap<String, Json>,
@@ -186,7 +187,10 @@ fn decode_base_64_string(what: &str) -> Result<String, String> {
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+    use rustc_serialize::json::Json;
     use jwt;
+    use jwt::{RegisteredHeader, Header, Claim, RegisteredClaim};
 
     const sample_token: &'static str = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ.\
                                         eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ.\
@@ -232,4 +236,29 @@ mod test {
         assert_eq!(expected, result);
     }
 
+    #[test]
+    fn parse_the_token() {
+        let sample = sample_token;
+        let expected = jwt::JsonWebToken::new()
+            .add_header(&Header::Registered(RegisteredHeader::KeyId),
+                        Json::String(String::from("testkey-es256")))
+            .add_header(&Header::Registered(RegisteredHeader::Algorithm),
+                        Json::String(String::from("ES256")))
+            .add_payload(&Claim::Registered(RegisteredClaim::Subject),
+                         Json::String(String::from("test2")))
+            .add_payload(&Claim::Custom("scope"),
+                         Json::Array(vec![Json::String(String::from("cn"))]))
+            .add_payload(&Claim::Registered(RegisteredClaim::Issuer),
+                         Json::String(String::from("B")))
+            .add_payload(&Claim::Custom("realm"),
+                         Json::String(String::from("/services")))
+            .add_payload(&Claim::Registered(RegisteredClaim::ExpirationTime),
+                         Json::U64(1457319814))
+            .add_payload(&Claim::Registered(RegisteredClaim::IssuedAt),
+                         Json::U64(1457291014));
+
+        let result = jwt::JsonWebToken::from_str(sample).unwrap();
+
+        assert_eq!(expected, result);
+    }
 }
