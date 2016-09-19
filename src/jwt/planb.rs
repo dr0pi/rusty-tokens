@@ -25,7 +25,7 @@ pub struct PlanbToken {
 impl PlanbToken {
     fn from_jwt_token(jwt_token: &JsonWebToken) -> Result<PlanbToken, &'static str> {
         let kid: &str = try!{
-            jwt_token.get_header(&Header::Custom("kid")).and_then(|json|
+            jwt_token.get_registered_header(RegisteredHeader::KeyId).and_then(|json|
                 json.as_string()).ok_or("Custom field 'kid' is missing or not a String.") };
         let algorithm: &str = try!{
             jwt_token.get_header(&Header::Registered(RegisteredHeader::Algorithm)).and_then(|json|
