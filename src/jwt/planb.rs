@@ -3,11 +3,13 @@ use rustc_serialize::json::Json;
 use chrono::*;
 use super::*;
 
+#[derive(PartialEq, Debug)]
 pub struct PlanbHeader {
     pub key_id: String,
     pub algorithm: String,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct PlanbPayload {
     pub subject: String,
     pub realm: String,
@@ -17,6 +19,7 @@ pub struct PlanbPayload {
     pub issue_date: NaiveDateTime,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct PlanbToken {
     pub header: PlanbHeader,
     pub payload: PlanbPayload,
@@ -96,20 +99,36 @@ impl FromStr for PlanbToken {
 
 #[cfg(test)]
 mod test {
-    use super::PlanbToken;
+    use super::{PlanbToken, PlanbHeader, PlanbPayload};
     use std::str::FromStr;
+    use chrono::{NaiveDate, NaiveTime, NaiveDateTime};
+
     const sample_token: &'static str = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ.\
                                         eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ.\
                                         KmDsVB09RAOYwT0Y6E9tdQpg0rAPd8SExYhcZ9tXEO6y9AWX4wBylnmNHVoetWu7MwoexWkaKdpKk09IodMVug";
 
     #[test]
     fn parse_the_token() {
-        unimplemented!()
-        // let sample = sample_token;
-        // let expected = PlanbToken {};
-        //
-        // let result = PlanbToken::from_str(sample).unwrap();
-        //
-        // assert_eq!(expected, result);
+        let sample = sample_token;
+        let expected = PlanbToken {
+            header: PlanbHeader {
+                key_id: String::from("testkey-es256"),
+                algorithm: String::from("ES256"),
+            },
+            payload: PlanbPayload {
+                subject: String::from("test2"),
+                realm: String::from("/services"),
+                scopes: vec![String::from("cn")],
+                issuer: String::from("B"),
+                expiration_date: NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 7),
+                                                    NaiveTime::from_hms_milli(3, 3, 34, 0)),
+                issue_date: NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 6),
+                                               NaiveTime::from_hms_milli(19, 3, 34, 0)),
+            },
+        };
+
+        let result = PlanbToken::from_str(sample).unwrap();
+
+        assert_eq!(expected, result);
     }
 }
