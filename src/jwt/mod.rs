@@ -14,6 +14,13 @@ pub enum RegisteredHeader {
     Algorithm,
     Type,
     ContentType,
+    KeyId,
+    JwkSetUrl,
+    JsonWebKey,
+    Critical,
+    X509Url,
+    X509CertificateChain,
+    X509CertificateSha1Thumbprint,
 }
 
 impl RegisteredHeader {
@@ -22,6 +29,13 @@ impl RegisteredHeader {
             RegisteredHeader::Algorithm => "alg",
             RegisteredHeader::Type => "typ",
             RegisteredHeader::ContentType => "cty",
+            RegisteredHeader::KeyId => "kid",
+            RegisteredHeader::JwkSetUrl => "jku",
+            RegisteredHeader::JsonWebKey => "jwk",
+            RegisteredHeader::Critical => "crit",
+            RegisteredHeader::X509Url => "x5u",
+            RegisteredHeader::X509CertificateChain => "x5c",
+            RegisteredHeader::X509CertificateSha1Thumbprint => "x5t",
         }
     }
 }

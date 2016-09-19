@@ -1,8 +1,8 @@
-use std::error::Error;
 use std::collections::HashMap;
 use std::time::{Instant as TInstant, Duration as TDuration};
 use std::thread;
 use std::sync::{Arc, RwLock};
+use std::cmp::{min, max};
 use chrono::*;
 use InitializationError;
 use {Token, Scope};
@@ -74,7 +74,8 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
 
 
 
-    // let mut token_states_to_update = Vec::new();
+    let mut token_states_to_update: Vec<(String, TokenResult)> = Vec::new();
+
     loop {
         let iteration_started = TInstant::now();
 
@@ -87,14 +88,57 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
             }
         };
 
-        // update_all_due_token_data(&mut managed_token_data,
-        //                           &mut token_states_to_update,
-        //                           credentials,
-        //                           &access_token_provider,
-        //                           conf.refresh_percentage_threshold,
-        //                           conf.warning_percentage_threshold);
+        let now = UTC::now().timestamp();
 
+        let mut next_update_at = UTC::now().timestamp() + 3600;
+        for ref mut token_data in &mut managed_token_data {
+            if token_data.update_latest <= now {
+                let res = update_token_data(token_data,
+                                            &access_token_provider,
+                                            &credentials,
+                                            conf.refresh_percentage_threshold,
+                                            conf.warning_percentage_threshold);
+                match res {
+                    Ok(()) => {
+                        match token_data.token {
+                            Some(ref token) =>
+                            token_states_to_update.push((token_data.token_name.clone(), Ok(token.clone()))),
+                            None =>
+                            token_states_to_update.push((token_data.token_name.clone(),
+                                                         Err(TokenError::NoToken))),
+                        }
+                    }
+                    Err(err) => {
+                        if token_data.valid_until > now {
+                            warn!("Could not update still valid token \
+                                   {}: {}",
+                                  token_data.token_name,
+                                  err);
+                        } else {
+                            error!("Could not update expired token {}: {}",
+                                   token_data.token_name,
+                                   err);
+                            token_states_to_update.push((token_data.token_name.clone(),
+                                                         Err(TokenError::RequestError(err))));
+                        }
+                    }
+                }
+            }
+            if token_data.warn_after < now {
+                warn!("Token {} becomes to old.", &token_data.token_name);
+            }
 
+            next_update_at = min(next_update_at, token_data.update_latest);
+        }
+
+        {
+            let mut unlocked_manager_state = manager_state.write().unwrap();
+            for to_update in &token_states_to_update {
+                unlocked_manager_state.insert(to_update.0.clone(), to_update.1.clone());
+            }
+        }
+
+        token_states_to_update.clear();
 
         let stop = match stop_requested.read() {
             Ok(stop) => *stop,
@@ -106,58 +150,18 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
         if stop {
             break;
         }
-        let iteration_ended = TInstant::now();
 
-        thread::sleep(TDuration::from_secs(1));
+        let iteration_ended = TInstant::now();
+        let time_spent_in_iteration: u64 = (iteration_ended - iteration_started).as_secs();
+        let next_update_in: u64 = max(0i64, next_update_at - UTC::now().timestamp()) as u64;
+
+        if time_spent_in_iteration < next_update_in {
+            let duration = TDuration::from_secs(next_update_in - time_spent_in_iteration);
+            thread::sleep(duration);
+        }
     }
 
     info!("Manager loop stopped.");
-}
-
-fn update_all_due_token_data<'a, T>(managed_token_data: &'a mut Vec<TokenData>,
-                                    token_states_to_update: &mut Vec<(&'a String, TokenResult)>,
-                                    credentials: CredentialsPair,
-                                    access_token_provider: &T,
-                                    refresh_percentage_threshold: f32,
-                                    warning_percentage_threshold: f32)
-    where T: AccessTokenProvider
-{
-    let now = UTC::now().timestamp();
-
-
-    for token_data in managed_token_data {
-        if token_data.update_latest <= now {
-            let res = update_token_data(token_data,
-                                        access_token_provider,
-                                        &credentials,
-                                        refresh_percentage_threshold,
-                                        warning_percentage_threshold);
-            match res {
-                Ok(()) => {
-                    unimplemented!();
-                    // let token = &token_data.token.unwrap();
-                    // state_to_update.push((&token_data.token_name, Ok(token.clone())));
-                }
-                Err(err) => {
-                    if token_data.valid_until > now {
-                        warn!("Could not update still valid token \
-                               {}: {}",
-                              token_data.token_name,
-                              err);
-                    } else {
-                        error!("Could not update expired token {}: {}",
-                               token_data.token_name,
-                               err);
-                        token_states_to_update.push((&token_data.token_name, Err(TokenError::RequestError(err))));
-                    }
-                }
-            }
-        }
-        if token_data.warn_after < now {
-            warn!("Token {} becomes to old.", token_data.token_name);
-        }
-    }
-
 }
 
 fn update_token_data<T>(token_data: &mut TokenData,
