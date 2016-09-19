@@ -153,15 +153,27 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
 
         let iteration_ended = TInstant::now();
         let time_spent_in_iteration: u64 = (iteration_ended - iteration_started).as_secs();
-        let next_update_in: u64 = max(0i64, next_update_at - UTC::now().timestamp()) as u64;
 
-        if time_spent_in_iteration < next_update_in {
-            let duration = TDuration::from_secs(next_update_in - time_spent_in_iteration);
-            thread::sleep(duration);
-        }
+        match calc_sleep_duration(time_spent_in_iteration,
+                                  next_update_at,
+                                  UTC::now().timestamp()) {
+            0u64 => (),
+            seconds => thread::sleep(TDuration::from_secs(seconds)),
+        };
+
     }
 
     info!("Manager loop stopped.");
+}
+
+fn calc_sleep_duration(time_spent_in_iteration: u64, next_update_at: i64, now: i64) -> u64 {
+    let next_update_in: u64 = max(0i64, next_update_at - now) as u64;
+
+    if time_spent_in_iteration < next_update_in {
+        next_update_in - time_spent_in_iteration
+    } else {
+        0u64
+    }
 }
 
 fn update_token_data<T>(token_data: &mut TokenData,
