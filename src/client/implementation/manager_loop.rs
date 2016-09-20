@@ -12,13 +12,13 @@ use super::{RequestAccessTokenResult, AccessToken, AccessTokenProvider, RequestA
             SelfUpdatingTokenManagerConfig};
 
 
-struct TokenData {
-    token_name: String,
+struct TokenData<'a> {
+    token_name: &'a str,
     token: Option<Token>,
     update_latest: i64,
     valid_until: i64,
     warn_after: i64,
-    scopes: Vec<Scope>,
+    scopes: &'a Vec<Scope>,
 }
 
 pub fn start_manager<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
@@ -42,16 +42,17 @@ pub fn start_manager<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult
     Ok(())
 }
 
-fn initialize(token_data_buffer: &mut Vec<TokenData>, managed_tokens: Vec<ManagedToken>) {
+fn initialize<'a>(token_data_buffer: &mut Vec<TokenData<'a>>,
+                  managed_tokens: &'a Vec<ManagedToken>) {
     let t = UTC::now().timestamp();
     for managed_token in managed_tokens {
         token_data_buffer.push(TokenData {
-            token_name: managed_token.name.clone(),
+            token_name: &managed_token.name,
             token: None,
             update_latest: t,
             warn_after: t,
             valid_until: t,
-            scopes: managed_token.scopes,
+            scopes: &managed_token.scopes,
         });
     }
 }
@@ -68,13 +69,13 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
 
     let mut managed_token_data = {
         let mut v = Vec::new();
-        initialize(&mut v, conf.managed_tokens);
+        initialize(&mut v, &conf.managed_tokens);
         v
     };
 
 
 
-    let mut token_states_to_update: Vec<(String, TokenResult)> = Vec::new();
+    let mut token_states_to_update: Vec<(&str, TokenResult)> = Vec::new();
 
     loop {
         let iteration_started = TInstant::now();
@@ -134,7 +135,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
         {
             let mut unlocked_manager_state = manager_state.write().unwrap();
             for to_update in &token_states_to_update {
-                unlocked_manager_state.insert(to_update.0.clone(), to_update.1.clone());
+                unlocked_manager_state.insert(to_update.0.to_owned(), to_update.1.clone());
             }
         }
 
@@ -187,28 +188,32 @@ fn update_token_data<T>(token_data: &mut TokenData,
     let access_token =
         try!{query_access_token(token_data, credentials, access_token_provider, 3, None)};
 
-    update_token_data_with_access_token(token_data,
+    let now_utc: i64 = UTC::now().timestamp();
+
+    update_token_data_with_access_token(now_utc,
+                                        token_data,
                                         access_token,
                                         refresh_percentage_threshold,
                                         warning_percentage_threshold);
     Ok(())
 }
 
-fn update_token_data_with_access_token(token_data: &mut TokenData,
+fn update_token_data_with_access_token(now_utc: i64,
+                                       token_data: &mut TokenData,
                                        access_token: AccessToken,
                                        refresh_percentage_threshold: f32,
                                        warning_percentage_threshold: f32) {
     let now_utc: i64 = UTC::now().timestamp();
     let valid_until_utc: i64 = access_token.valid_until_utc.timestamp();
-    let update_latest: i64 = scale_date(now_utc, valid_until_utc, refresh_percentage_threshold);
-    let warn_after: i64 = scale_date(now_utc, valid_until_utc, warning_percentage_threshold);
+    let update_latest: i64 = scale_time(now_utc, valid_until_utc, refresh_percentage_threshold);
+    let warn_after: i64 = scale_time(now_utc, valid_until_utc, warning_percentage_threshold);
     token_data.update_latest = update_latest;
     token_data.warn_after = warn_after;
     token_data.valid_until = valid_until_utc;
     token_data.token = Some(access_token.token);
 }
 
-fn scale_date(now: i64, later: i64, factor: f32) -> i64 {
+fn scale_time(now: i64, later: i64, factor: f32) -> i64 {
     now + ((later - now) as f64 * factor as f64) as i64
 }
 
@@ -246,4 +251,68 @@ fn query_access_token<T>(token_data: &TokenData,
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::*;
+    use super::scale_time;
+
+    // #[test]
+    // fn update_token_data_with_access_token_must_create_the_correct_result() {
+    //     let now = 100;
+    //     let refresh_percentage_threshold = 0.6f32;
+    //     let warning_percentage_threshold = 0.4f32;
+    //
+    //     let token_data = TokenData {
+    //             token_name = String::from(""),
+    //             token: Option<Token>,
+    //             update_latest: i64,
+    //             valid_until: i64,
+    //             warn_after: i64,
+    //             scopes: Vec<Scope>,
+    //     }
+    // }
+
+    #[test]
+    fn scale_time_0_percent() {
+        let now = 100;
+        let later = 200;
+        let factor = 0.0f32;
+        let expected = 100;
+        assert_eq!(expected, scale_time(now, later, factor));
+    }
+
+    #[test]
+    fn scale_time_30_percent() {
+        let now = 100;
+        let later = 200;
+        let factor = 0.3f32;
+        let expected = 130;
+        assert_eq!(expected, scale_time(now, later, factor));
+    }
+
+    #[test]
+    fn scale_time_50_percent() {
+        let now = 100;
+        let later = 200;
+        let factor = 0.5f32;
+        let expected = 150;
+        assert_eq!(expected, scale_time(now, later, factor));
+    }
+
+    #[test]
+    fn scale_time_70_percent_evals_to_69_percent() {
+        let now = 100;
+        let later = 200;
+        let factor = 0.7f32;
+        let expected = 169;
+        assert_eq!(expected, scale_time(now, later, factor));
+    }
+
+    #[test]
+    fn scale_time_100_percent() {
+        let now = 100;
+        let later = 200;
+        let factor = 1.0f32;
+        let expected = 200;
+        assert_eq!(expected, scale_time(now, later, factor));
+    }
+}
