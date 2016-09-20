@@ -20,6 +20,7 @@ pub struct SelfUpdatingTokenManagerConfig {
     pub managed_tokens: Vec<ManagedToken>,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct AccessToken {
     pub token: Token,
     pub issued_at_utc: NaiveDateTime,

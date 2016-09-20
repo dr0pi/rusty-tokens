@@ -12,6 +12,7 @@ use super::{RequestAccessTokenResult, AccessToken, AccessTokenProvider, RequestA
             SelfUpdatingTokenManagerConfig};
 
 
+#[derive(Debug, PartialEq)]
 struct TokenData<'a> {
     token_name: &'a str,
     token: Option<Token>,
@@ -203,7 +204,6 @@ fn update_token_data_with_access_token(now_utc: i64,
                                        access_token: AccessToken,
                                        refresh_percentage_threshold: f32,
                                        warning_percentage_threshold: f32) {
-    let now_utc: i64 = UTC::now().timestamp();
     let valid_until_utc: i64 = access_token.valid_until_utc.timestamp();
     let update_latest: i64 = scale_time(now_utc, valid_until_utc, refresh_percentage_threshold);
     let warn_after: i64 = scale_time(now_utc, valid_until_utc, warning_percentage_threshold);
@@ -252,24 +252,52 @@ fn query_access_token<T>(token_data: &TokenData,
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use super::scale_time;
+    use chrono::NaiveDateTime;
+    use {Scope, Token};
+    use client::implementation::AccessToken;
+    use super::{scale_time, update_token_data_with_access_token, TokenData};
 
-    // #[test]
-    // fn update_token_data_with_access_token_must_create_the_correct_result() {
-    //     let now = 100;
-    //     let refresh_percentage_threshold = 0.6f32;
-    //     let warning_percentage_threshold = 0.4f32;
-    //
-    //     let token_data = TokenData {
-    //             token_name = String::from(""),
-    //             token: Option<Token>,
-    //             update_latest: i64,
-    //             valid_until: i64,
-    //             warn_after: i64,
-    //             scopes: Vec<Scope>,
-    //     }
-    // }
+    #[test]
+    fn update_token_data_with_access_token_must_create_the_correct_result() {
+        let now = 100;
+        let refresh_percentage_threshold = 0.6f32;
+        let warning_percentage_threshold = 0.8f32;
+
+        let scopes = vec![Scope(String::from("sc"))];
+
+        let mut sample_token_data = TokenData {
+            token_name: "token_data",
+            token: None,
+            update_latest: -1,
+            valid_until: -2,
+            warn_after: -3,
+            scopes: &scopes,
+        };
+
+        let sample_access_token = AccessToken {
+            token: Token(String::from("token")),
+            issued_at_utc: NaiveDateTime::from_timestamp(50, 0),
+            valid_until_utc: NaiveDateTime::from_timestamp(200, 0),
+        };
+
+        let expected = TokenData {
+            token_name: "token_data",
+            token: Some(Token(String::from("token"))),
+            update_latest: 160,
+            valid_until: 200,
+            warn_after: 180,
+            scopes: &scopes,
+        };
+
+        update_token_data_with_access_token(now,
+                                            &mut sample_token_data,
+                                            sample_access_token,
+                                            refresh_percentage_threshold,
+                                            warning_percentage_threshold);
+
+        assert_eq!(expected, sample_token_data);
+
+    }
 
     #[test]
     fn scale_time_0_percent() {
