@@ -156,9 +156,9 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
         let iteration_ended = TInstant::now();
         let time_spent_in_iteration: u64 = (iteration_ended - iteration_started).as_secs();
 
-        match calc_sleep_duration(time_spent_in_iteration,
-                                  next_update_at,
-                                  UTC::now().timestamp()) {
+        match calc_sleep_duration(UTC::now().timestamp(),
+                                  time_spent_in_iteration,
+                                  next_update_at) {
             0u64 => (),
             seconds => thread::sleep(TDuration::from_secs(seconds)),
         };
@@ -168,7 +168,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
     info!("Manager loop stopped.");
 }
 
-fn calc_sleep_duration(time_spent_in_iteration: u64, next_update_at: i64, now: i64) -> u64 {
+fn calc_sleep_duration(now: i64, time_spent_in_iteration: u64, next_update_at: i64) -> u64 {
     let next_update_in: u64 = max(0i64, next_update_at - now) as u64;
 
     if time_spent_in_iteration < next_update_in {
@@ -255,7 +255,92 @@ mod test {
     use chrono::NaiveDateTime;
     use {Scope, Token};
     use client::implementation::AccessToken;
-    use super::{scale_time, update_token_data_with_access_token, TokenData};
+    use super::{scale_time, update_token_data_with_access_token, TokenData, calc_sleep_duration};
+
+    #[test]
+    fn calc_sleep_duration_when_time_spent_is_zero_and_next_update_is_overdue() {
+        let now = 10i64;
+        let time_spent_in_iteration = 0u64;
+        let next_update_at = 0i64;
+
+        let expected = 0u64;
+        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn calc_sleep_duration_when_time_spent_is_zero_and_next_update_is_now() {
+        let now = 10i64;
+        let time_spent_in_iteration = 0u64;
+        let next_update_at = 10i64;
+
+        let expected = 0u64;
+        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn calc_sleep_duration_when_time_spent_is_zero_and_next_update_is_soon() {
+        let now = 10i64;
+        let time_spent_in_iteration = 0u64;
+        let next_update_at = 20i64;
+
+        let expected = 10u64;
+        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn calc_sleep_duration_when_time_spent_is_not_zero_and_next_update_is_overdue() {
+        let now = 10i64;
+        let time_spent_in_iteration = 5u64;
+        let next_update_at = 9i64;
+
+        let expected = 0u64;
+        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn calc_sleep_duration_when_time_spent_is_not_zero_and_next_update_is_now() {
+        let now = 10i64;
+        let time_spent_in_iteration = 5u64;
+        let next_update_at = 10i64;
+
+        let expected = 0u64;
+        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn calc_sleep_duration_when_time_spent_is_not_zero_and_next_update_is_soon_1() {
+        let now = 10i64;
+        let time_spent_in_iteration = 5u64;
+        let next_update_at = 15i64;
+
+        let expected = 0u64;
+        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
+
+        assert_eq!(expected, result);
+
+    }
+
+    #[test]
+    fn calc_sleep_duration_when_time_spent_is_not_zero_and_next_update_is_soon_2() {
+        let now = 10i64;
+        let time_spent_in_iteration = 5u64;
+        let next_update_at = 16i64;
+
+        let expected = 1u64;
+        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
+
+        assert_eq!(expected, result);
+    }
 
     #[test]
     fn update_token_data_with_access_token_must_create_the_correct_result() {
