@@ -154,13 +154,18 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
         }
 
         let iteration_ended = TInstant::now();
-        let time_spent_in_iteration: u64 = (iteration_ended - iteration_started).as_secs();
+        let time_spent_in_iteration = iteration_ended - iteration_started;
+        debug!("Iteration took {:?}.", time_spent_in_iteration);
 
-        match calc_sleep_duration(UTC::now().timestamp(),
-                                  time_spent_in_iteration,
-                                  next_update_at) {
-            0u64 => (),
-            seconds => thread::sleep(TDuration::from_secs(seconds)),
+
+        match calc_sleep_duration(UTC::now().timestamp(), next_update_at) {
+            duration if duration.as_secs() == 0u64 => {
+                info!("Starting token update iteration immediately.")
+            }
+            duration => {
+                info!("Starting next token update iteration in {:?}.", duration);
+                thread::sleep(duration)
+            }
         };
 
     }
@@ -168,13 +173,12 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
     info!("Manager loop stopped.");
 }
 
-fn calc_sleep_duration(now: i64, time_spent_in_iteration: u64, next_update_at: i64) -> u64 {
-    let next_update_in: u64 = max(0i64, next_update_at - now) as u64;
-
-    if time_spent_in_iteration < next_update_in {
-        next_update_in - time_spent_in_iteration
+fn calc_sleep_duration(now: i64, next_update_at: i64) -> TDuration {
+    if (next_update_at - now) > 0i64 {
+        let next_update_in: u64 = (next_update_at - now) as u64;
+        TDuration::from_secs(next_update_in)
     } else {
-        0u64
+        TDuration::from_secs(0u64)
     }
 }
 
@@ -251,181 +255,7 @@ fn query_access_token<T>(token_data: &TokenData,
 }
 
 #[cfg(test)]
-mod test {
-    use chrono::NaiveDateTime;
-    use {Scope, Token};
-    use client::implementation::AccessToken;
-    use super::{scale_time, update_token_data_with_access_token, TokenData, calc_sleep_duration};
+mod test_funs;
 
-    #[test]
-    fn calc_sleep_duration_when_time_spent_is_zero_and_next_update_is_overdue() {
-        let now = 10i64;
-        let time_spent_in_iteration = 0u64;
-        let next_update_at = 0i64;
-
-        let expected = 0u64;
-        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
-
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn calc_sleep_duration_when_time_spent_is_zero_and_next_update_is_now() {
-        let now = 10i64;
-        let time_spent_in_iteration = 0u64;
-        let next_update_at = 10i64;
-
-        let expected = 0u64;
-        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
-
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn calc_sleep_duration_when_time_spent_is_zero_and_next_update_is_soon() {
-        let now = 10i64;
-        let time_spent_in_iteration = 0u64;
-        let next_update_at = 20i64;
-
-        let expected = 10u64;
-        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
-
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn calc_sleep_duration_when_time_spent_is_not_zero_and_next_update_is_overdue() {
-        let now = 10i64;
-        let time_spent_in_iteration = 5u64;
-        let next_update_at = 9i64;
-
-        let expected = 0u64;
-        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
-
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn calc_sleep_duration_when_time_spent_is_not_zero_and_next_update_is_now() {
-        let now = 10i64;
-        let time_spent_in_iteration = 5u64;
-        let next_update_at = 10i64;
-
-        let expected = 0u64;
-        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
-
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn calc_sleep_duration_when_time_spent_is_not_zero_and_next_update_is_soon_1() {
-        let now = 10i64;
-        let time_spent_in_iteration = 5u64;
-        let next_update_at = 15i64;
-
-        let expected = 0u64;
-        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
-
-        assert_eq!(expected, result);
-
-    }
-
-    #[test]
-    fn calc_sleep_duration_when_time_spent_is_not_zero_and_next_update_is_soon_2() {
-        let now = 10i64;
-        let time_spent_in_iteration = 5u64;
-        let next_update_at = 16i64;
-
-        let expected = 1u64;
-        let result = calc_sleep_duration(now, time_spent_in_iteration, next_update_at);
-
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn update_token_data_with_access_token_must_create_the_correct_result() {
-        let now = 100;
-        let refresh_percentage_threshold = 0.6f32;
-        let warning_percentage_threshold = 0.8f32;
-
-        let scopes = vec![Scope(String::from("sc"))];
-
-        let mut sample_token_data = TokenData {
-            token_name: "token_data",
-            token: None,
-            update_latest: -1,
-            valid_until: -2,
-            warn_after: -3,
-            scopes: &scopes,
-        };
-
-        let sample_access_token = AccessToken {
-            token: Token(String::from("token")),
-            issued_at_utc: NaiveDateTime::from_timestamp(50, 0),
-            valid_until_utc: NaiveDateTime::from_timestamp(200, 0),
-        };
-
-        let expected = TokenData {
-            token_name: "token_data",
-            token: Some(Token(String::from("token"))),
-            update_latest: 160,
-            valid_until: 200,
-            warn_after: 180,
-            scopes: &scopes,
-        };
-
-        update_token_data_with_access_token(now,
-                                            &mut sample_token_data,
-                                            sample_access_token,
-                                            refresh_percentage_threshold,
-                                            warning_percentage_threshold);
-
-        assert_eq!(expected, sample_token_data);
-
-    }
-
-    #[test]
-    fn scale_time_0_percent() {
-        let now = 100;
-        let later = 200;
-        let factor = 0.0f32;
-        let expected = 100;
-        assert_eq!(expected, scale_time(now, later, factor));
-    }
-
-    #[test]
-    fn scale_time_30_percent() {
-        let now = 100;
-        let later = 200;
-        let factor = 0.3f32;
-        let expected = 130;
-        assert_eq!(expected, scale_time(now, later, factor));
-    }
-
-    #[test]
-    fn scale_time_50_percent() {
-        let now = 100;
-        let later = 200;
-        let factor = 0.5f32;
-        let expected = 150;
-        assert_eq!(expected, scale_time(now, later, factor));
-    }
-
-    #[test]
-    fn scale_time_70_percent_evals_to_69_percent() {
-        let now = 100;
-        let later = 200;
-        let factor = 0.7f32;
-        let expected = 169;
-        assert_eq!(expected, scale_time(now, later, factor));
-    }
-
-    #[test]
-    fn scale_time_100_percent() {
-        let now = 100;
-        let later = 200;
-        let factor = 1.0f32;
-        let expected = 200;
-        assert_eq!(expected, scale_time(now, later, factor));
-    }
-}
+#[cfg(test)]
+mod test_loop;
