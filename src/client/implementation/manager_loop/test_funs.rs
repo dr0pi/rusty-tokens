@@ -76,7 +76,6 @@ fn update_token_data_with_access_token_must_create_the_correct_result() {
                                         warning_percentage_threshold);
 
     assert_eq!(expected, sample_token_data);
-
 }
 
 #[test]

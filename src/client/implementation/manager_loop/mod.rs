@@ -101,7 +101,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                                             conf.refresh_percentage_threshold,
                                             conf.warning_percentage_threshold);
                 match res {
-                    Ok(()) => {
+                    Ok(_) => {
                         match token_data.token {
                             Some(ref token) =>
                             token_states_to_update.push((token_data.token_name.clone(), Ok(token.clone()))),
@@ -187,20 +187,21 @@ fn update_token_data<T>(token_data: &mut TokenData,
                         credentials: &CredentialsPair,
                         refresh_percentage_threshold: f32,
                         warning_percentage_threshold: f32)
-                        -> Result<(), RequestAccessTokenError>
+                        -> Result<DateTime<UTC>, RequestAccessTokenError>
     where T: AccessTokenProvider
 {
     let access_token =
         try!{query_access_token(token_data, credentials, access_token_provider, 3, None)};
 
-    let now_utc: i64 = UTC::now().timestamp();
+    let now_utc = UTC::now();
+    let now_utc_epoch: i64 = now_utc.timestamp();
 
-    update_token_data_with_access_token(now_utc,
+    update_token_data_with_access_token(now_utc_epoch,
                                         token_data,
                                         access_token,
                                         refresh_percentage_threshold,
                                         warning_percentage_threshold);
-    Ok(())
+    Ok(now_utc)
 }
 
 fn update_token_data_with_access_token(now_utc: i64,
@@ -258,4 +259,4 @@ fn query_access_token<T>(token_data: &TokenData,
 mod test_funs;
 
 #[cfg(test)]
-mod test_loop;
+mod test_loop_funs;
