@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::time::{Instant as TInstant, Duration as TDuration};
 use std::thread;
 use std::sync::{Arc, RwLock};
-use std::cmp::{min, max};
+use std::cmp::min;
 use chrono::*;
 use InitializationError;
 use {Token, Scope};
@@ -31,13 +31,18 @@ pub fn start_manager<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult
     where T: AccessTokenProvider + Send + 'static,
           U: CredentialsPairProvider + Send + 'static
 {
-    info!("Manager loop starting.");
+    info!("Manager starting.");
 
     let _join_handle = thread::spawn(move || {
+        let mut managed_token_data = Vec::new();
+        initialize(&mut managed_token_data, &conf.managed_tokens);
+
         manager_loop(manager_state,
+                     managed_token_data,
                      credentials_provider,
                      access_token_provider,
-                     conf,
+                     conf.refresh_percentage_threshold,
+                     conf.warning_percentage_threshold,
                      stop_requested);
     });
     Ok(())
@@ -59,23 +64,18 @@ fn initialize<'a>(token_data_buffer: &mut Vec<TokenData<'a>>,
 }
 
 fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
+                      managed_token_data: Vec<TokenData>,
                       credentials_provider: U,
                       access_token_provider: T,
-                      conf: SelfUpdatingTokenManagerConfig,
+                      refresh_percentage_threshold: f32,
+                      warning_percentage_threshold: f32,
                       stop_requested: Arc<RwLock<bool>>)
     where T: AccessTokenProvider,
           U: CredentialsPairProvider
 {
     info!("Manager loop started.");
 
-    let mut managed_token_data = {
-        let mut v = Vec::new();
-        initialize(&mut v, &conf.managed_tokens);
-        v
-    };
-
-
-
+    let mut mutable_managed_token_data = managed_token_data;
     let mut token_states_to_update: Vec<(&str, TokenResult)> = Vec::new();
 
     loop {
@@ -93,13 +93,13 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
         let now = UTC::now().timestamp();
 
         let mut next_update_at = UTC::now().timestamp() + 3600;
-        for ref mut token_data in &mut managed_token_data {
+        for ref mut token_data in &mut mutable_managed_token_data {
             if token_data.update_latest <= now {
                 let res = update_token_data(token_data,
                                             &access_token_provider,
                                             &credentials,
-                                            conf.refresh_percentage_threshold,
-                                            conf.warning_percentage_threshold);
+                                            refresh_percentage_threshold,
+                                            warning_percentage_threshold);
                 match res {
                     Ok(_) => {
                         match token_data.token {

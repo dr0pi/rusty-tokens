@@ -1,28 +1,13 @@
 use chrono::*;
-use std::time::Duration as TDuration;
 use {Scope, Token};
-use client::credentials::{Credentials, CredentialsPair, CredentialsPairProvider};
+use client::credentials::{Credentials, CredentialsPair, CredentialsPairProvider,
+                          StaticCredentialsProvider};
 use client::implementation::{AccessToken, AccessTokenProvider, RequestAccessTokenResult,
                              RequestAccessTokenError};
 use super::{TokenData, update_token_data};
 
 struct AccessTokenProviderMock {
     result: RequestAccessTokenResult,
-}
-
-impl AccessTokenProviderMock {
-    fn new(token: Token,
-           issued_at_utc: NaiveDateTime,
-           valid_until_utc: NaiveDateTime)
-           -> AccessTokenProviderMock {
-        AccessTokenProviderMock {
-            result: Ok(AccessToken {
-                token: token,
-                valid_until_utc: valid_until_utc,
-                issued_at_utc: issued_at_utc,
-            }),
-        }
-    }
 }
 
 impl AccessTokenProvider for AccessTokenProviderMock {
@@ -134,4 +119,36 @@ fn update_token_data_should_not_update_the_token_when_the_acess_token_provider_f
 
 
     assert_eq!(result.is_err(), true);
+}
+
+#[test]
+fn basic_loop_iteration() {
+    let now = UTC::now();
+    let refresh_percentage_threshold = 0.5f32;
+    let warning_percentage_threshold = 1.0f32;
+
+    let scopes = vec![Scope(String::from("sc"))];
+
+
+
+    let mut sample_token_data = TokenData {
+        token_name: "token_data",
+        token: None,
+        update_latest: -1,
+        valid_until: -2,
+        warn_after: -3,
+        scopes: &scopes,
+    };
+
+    let sample_access_token = AccessToken {
+        token: Token(String::from("token")),
+        issued_at_utc: now.naive_utc() - Duration::seconds(60),
+        valid_until_utc: now.naive_utc() + Duration::seconds(60),
+    };
+
+    let provider = AccessTokenProviderMock { result: Ok(sample_access_token) };
+
+    let credentials_provider =
+        StaticCredentialsProvider::new(String::new(), String::new(), String::new(), String::new());
+
 }
