@@ -26,6 +26,13 @@ pub struct PlanbToken {
 }
 
 impl PlanbToken {
+    fn new(header: PlanbHeader, payload: PlanbPayload) -> PlanbToken {
+        PlanbToken {
+            header: header,
+            payload: payload,
+        }
+    }
+
     fn from_jwt_token(jwt_token: &JsonWebToken) -> Result<PlanbToken, &'static str> {
         let kid: &str = try!{
             jwt_token.get_registered_header(RegisteredHeader::KeyId).and_then(|json|
@@ -110,22 +117,28 @@ mod test {
     #[test]
     fn parse_the_token() {
         let sample = sample_token;
-        let expected = PlanbToken {
-            header: PlanbHeader {
-                key_id: String::from("testkey-es256"),
-                algorithm: String::from("ES256"),
-            },
-            payload: PlanbPayload {
-                subject: String::from("test2"),
-                realm: String::from("/services"),
-                scopes: vec![String::from("cn")],
-                issuer: String::from("B"),
-                expiration_date: NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 7),
-                                                    NaiveTime::from_hms_milli(3, 3, 34, 0)),
-                issue_date: NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 6),
-                                               NaiveTime::from_hms_milli(19, 3, 34, 0)),
-            },
-        };
+        let expected = PlanbToken::new(PlanbHeader {
+                                           key_id: String::from("testkey-es256"),
+                                           algorithm: String::from("ES256"),
+                                       },
+                                       PlanbPayload {
+                                           subject: String::from("test2"),
+                                           realm: String::from("/services"),
+                                           scopes: vec![String::from("cn")],
+                                           issuer: String::from("B"),
+                                           expiration_date:
+                                               NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 7),
+                                                                  NaiveTime::from_hms_milli(3,
+                                                                                            3,
+                                                                                            34,
+                                                                                            0)),
+                                           issue_date:
+                                               NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 6),
+                                                                  NaiveTime::from_hms_milli(19,
+                                                                                            3,
+                                                                                            34,
+                                                                                            0)),
+                                       });
 
         let result = PlanbToken::from_str(sample).unwrap();
 
