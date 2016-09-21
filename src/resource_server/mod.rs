@@ -9,6 +9,8 @@
 use std::error::Error;
 use std::fmt;
 use std::collections::HashSet;
+use std::convert::From;
+use std::io;
 use super::{Scope, Token};
 use rustc_serialize::{Decoder, Decodable, json};
 
@@ -161,6 +163,9 @@ pub enum AuthorizationServerError {
     Unknown {
         message: String,
     },
+    IoError {
+        message: String,
+    },
 }
 
 impl fmt::Display for AuthorizationServerError {
@@ -175,6 +180,7 @@ impl fmt::Display for AuthorizationServerError {
             AuthorizationServerError::Connection { ref message } => {
                 write!(f, "Connection: {}", message)
             }
+            AuthorizationServerError::IoError { ref message } => write!(f, "IOError: {}", message),
             AuthorizationServerError::Unknown { ref message } => write!(f, "Unknown: {}", message),
         }
     }
@@ -187,6 +193,7 @@ impl Error for AuthorizationServerError {
             AuthorizationServerError::TokenInfoUnparsable { ref message } => message.as_ref(),
             AuthorizationServerError::Connection { ref message } => message.as_ref(),
             AuthorizationServerError::Unknown { ref message } => message.as_ref(),
+            AuthorizationServerError::IoError { ref message } => message.as_ref(),
         }
     }
 
@@ -194,6 +201,13 @@ impl Error for AuthorizationServerError {
         None
     }
 }
+
+impl From<io::Error> for AuthorizationServerError {
+    fn from(err: io::Error) -> Self {
+        AuthorizationServerError::IoError { message: format!("{}", err) }
+    }
+}
+
 
 #[cfg(test)]
 mod test {

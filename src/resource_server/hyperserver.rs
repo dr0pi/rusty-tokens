@@ -188,7 +188,7 @@ impl AuthorizationServer for AuthorizationHyperServer {
         match response.status {
             StatusCode::Ok => {
                 let mut buf = String::new();
-                let _ = response.read_to_string(&mut buf);
+                let _ = try!{response.read_to_string(&mut buf)};
                 let user = try!{AuthenticatedUser::from_json(buf.as_ref())};
                 Ok(user)
             }

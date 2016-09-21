@@ -1,16 +1,17 @@
 use std::thread::JoinHandle;
 use std::io::Read;
+use std::str::FromStr;
 use url::form_urlencoded;
 use hyper;
 use hyper::header::{Headers, Authorization, Basic, ContentType};
 use hyper::client::response::Response;
 use hyper::status::StatusCode;
-use {InitializationError, Scope};
 use rustc_serialize::json;
 use jwt::planb::PlanbToken;
+use {InitializationError, Scope, Token};
 use client::credentials::{CredentialsPair, CredentialsPairProvider};
-use super::{SelfUpdatingTokenManager, SelfUpdatingTokenManagerConfig, AccessTokenProvider, AccessToken,
-            RequestAccessTokenResult, RequestAccessTokenError};
+use super::{SelfUpdatingTokenManager, SelfUpdatingTokenManagerConfig, AccessTokenProvider,
+            AccessToken, RequestAccessTokenResult, RequestAccessTokenError};
 
 pub struct HyperTokenManager;
 
@@ -46,9 +47,38 @@ impl HyperAccessTokenProvider {
                             scopes: &[Scope],
                             credentials: &CredentialsPair)
                             -> RequestAccessTokenResult {
-        // execute_http_request()
-        // evaluate_response
-        unimplemented!();
+        let mut response =
+            try!{self.execute_http_request_with_multiple_attempts(scopes, credentials, 3, None)};
+        evaluate_response(&mut response)
+    }
+
+    fn execute_http_request_with_multiple_attempts(&self,
+                                                   scopes: &[Scope],
+                                                   credentials: &CredentialsPair,
+                                                   attempts: u16,
+                                                   last_error: Option<RequestAccessTokenError>)
+                                                   -> Result<Response, RequestAccessTokenError> {
+        if attempts == 0 {
+            match last_error {
+                Some(err) => Err(err),
+                None => {
+                    Err(RequestAccessTokenError::InternalError(String::from("No attempts were \
+                                                                             made.")))
+                }
+            }
+        } else {
+            let result = self.execute_http_request(scopes, credentials);
+            match result {
+                Ok(res) => Ok(res),
+                Err(err) => {
+                    warn!("Failed to request access token: {}", err);
+                    self.execute_http_request_with_multiple_attempts(scopes,
+                                                                     credentials,
+                                                                     attempts - 1,
+                                                                     Some(RequestAccessTokenError::ConnectionError(format!("{}", err))))
+                }
+            }
+        }
     }
 
     fn execute_http_request(&self,
@@ -94,27 +124,15 @@ fn evaluate_response(response: &mut Response) -> RequestAccessTokenResult {
     match response.status {
         StatusCode::Ok => {
             let mut buf = String::new();
-            let _ = response.read_to_string(&mut buf);
-
-            match json::decode::<PlanBAccesTokenResponse>(buf) {
-                Err(json_decode_error) => {
-                    Err(RequestAccessTokenError::ParsingError(json_decode_error.description().to_owned()                    )
-                }
-                Ok(planb_response) => {
-                    match PlanbToken::from_str(&planb_response) {
-                        Ok(planbToken) => AccessToken{
-                            token: Token,
-                            issued_at_utc: NaiveDateTime,
-                            valid_until_utc: NaiveDateTime,
-
-                        },
-                        Err(error) => Err(RequestAccessTokenError::ParsingError(format!("{}", error))
-                    }
-
-                }
-            }
-
-            unimplemented!();
+            let _ = try!{response.read_to_string(&mut buf)};
+            let decoded_response = try!{json::decode::<PlanBAccesTokenResponse>(&buf)};
+            let planb_token = try!{PlanbToken::from_str(&decoded_response.access_token).map_err(|err|
+                RequestAccessTokenError::ParsingError(format!("Failed to parse response as a Plan B token: {}", err)))};
+            Ok(AccessToken {
+                token: Token(decoded_response.access_token),
+                issued_at_utc: planb_token.payload.issue_date_utc,
+                valid_until_utc: planb_token.payload.expiration_date_utc,
+            })
         }
         status => {
             let mut buf = String::new();

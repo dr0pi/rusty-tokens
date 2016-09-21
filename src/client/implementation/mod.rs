@@ -3,6 +3,9 @@ use std::error::Error;
 use std::thread::JoinHandle;
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
+use std::convert::From;
+use std::io;
+use rustc_serialize::json::DecoderError;
 use chrono::NaiveDateTime;
 use {Token, Scope, InitializationError};
 use super::{TokenError, TokenManager, ManagedToken, TokenResult};
@@ -89,6 +92,7 @@ impl TokenManager for SelfUpdatingTokenManager {
 pub enum RequestAccessTokenError {
     InternalError(String),
     ConnectionError(String),
+    IoError(String),
     RequestError {
         status: u16,
         body: String,
@@ -104,8 +108,9 @@ impl fmt::Display for RequestAccessTokenError {
                 write!(f, "InternalError: {}", message)
             }
             RequestAccessTokenError::ConnectionError(ref message) => {
-                write!(f, "NotAuthenticated: {}", message)
+                write!(f, "ConnectionError: {}", message)
             }
+            RequestAccessTokenError::IoError(ref message) => write!(f, "IoError: {}", message),
             RequestAccessTokenError::RequestError { ref status, ref body } => {
                 write!(f, "A request failed with status code{}: {}", status, body)
             }
@@ -127,6 +132,7 @@ impl Error for RequestAccessTokenError {
             RequestAccessTokenError::RequestError { .. } => "A request failed",
             RequestAccessTokenError::InvalidCredentials(ref message) => message.as_ref(),
             RequestAccessTokenError::ParsingError(ref message) => message.as_ref(),
+            RequestAccessTokenError::IoError(ref message) => message.as_ref(),
         }
     }
 
@@ -134,6 +140,19 @@ impl Error for RequestAccessTokenError {
         None
     }
 }
+
+impl From<io::Error> for RequestAccessTokenError {
+    fn from(err: io::Error) -> Self {
+        RequestAccessTokenError::IoError(format!("{}", err))
+    }
+}
+
+impl From<DecoderError> for RequestAccessTokenError {
+    fn from(err: DecoderError) -> Self {
+        RequestAccessTokenError::ParsingError(format!("{}", err))
+    }
+}
+
 
 #[cfg(test)]
 mod test {

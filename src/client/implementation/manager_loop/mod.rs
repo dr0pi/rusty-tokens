@@ -193,7 +193,7 @@ fn update_token_data<T>(token_data: &mut TokenData,
     where T: AccessTokenProvider
 {
     let access_token =
-        try!{query_access_token(token_data, credentials, access_token_provider, 3, None)};
+        try!{access_token_provider.get_access_token(&token_data.scopes, credentials)};
 
     let now_utc = UTC::now();
     let now_utc_epoch: i64 = now_utc.timestamp();
@@ -222,39 +222,6 @@ fn update_token_data_with_access_token(now_utc: i64,
 
 fn scale_time(now: i64, later: i64, factor: f32) -> i64 {
     now + ((later - now) as f64 * factor as f64) as i64
-}
-
-fn query_access_token<T>(token_data: &TokenData,
-                         credentials: &CredentialsPair,
-                         access_token_provider: &T,
-                         attempts_left: u16,
-                         last_error: Option<RequestAccessTokenError>)
-                         -> RequestAccessTokenResult
-    where T: AccessTokenProvider
-{
-    if attempts_left == 0 {
-        match last_error {
-            Some(err) => Err(err),
-            None => {
-                Err(RequestAccessTokenError::InternalError(String::from("No attempts were made.")))
-            }
-        }
-    } else {
-        let result = access_token_provider.get_access_token(&token_data.scopes, credentials);
-        match result {
-            Ok(res) => Ok(res),
-            Err(err) => {
-                warn!("Failed to query access token({}): {}",
-                      token_data.token_name,
-                      err);
-                query_access_token(token_data,
-                                   credentials,
-                                   access_token_provider,
-                                   attempts_left - 1,
-                                   Some(err))
-            }
-        }
-    }
 }
 
 #[cfg(test)]

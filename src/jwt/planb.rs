@@ -15,8 +15,8 @@ pub struct PlanbPayload {
     pub realm: String,
     pub scopes: Vec<String>,
     pub issuer: String,
-    pub expiration_date: NaiveDateTime,
-    pub issue_date: NaiveDateTime,
+    pub expiration_date_utc: NaiveDateTime,
+    pub issue_date_utc: NaiveDateTime,
 }
 
 #[derive(PartialEq, Debug)]
@@ -26,7 +26,7 @@ pub struct PlanbToken {
 }
 
 impl PlanbToken {
-    fn new(header: PlanbHeader, payload: PlanbPayload) -> PlanbToken {
+    pub fn new(header: PlanbHeader, payload: PlanbPayload) -> PlanbToken {
         PlanbToken {
             header: header,
             payload: payload,
@@ -85,8 +85,8 @@ impl PlanbToken {
             realm: String::from(realm),
             scopes: scopes,
             issuer: String::from(issuer),
-            expiration_date: expiration_date,
-            issue_date: issue_date,
+            expiration_date_utc: expiration_date,
+            issue_date_utc: issue_date,
         };
 
         Ok(PlanbToken {
@@ -117,28 +117,25 @@ mod test {
     #[test]
     fn parse_the_token() {
         let sample = sample_token;
-        let expected = PlanbToken::new(PlanbHeader {
-                                           key_id: String::from("testkey-es256"),
-                                           algorithm: String::from("ES256"),
-                                       },
-                                       PlanbPayload {
-                                           subject: String::from("test2"),
-                                           realm: String::from("/services"),
-                                           scopes: vec![String::from("cn")],
-                                           issuer: String::from("B"),
-                                           expiration_date:
-                                               NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 7),
-                                                                  NaiveTime::from_hms_milli(3,
-                                                                                            3,
-                                                                                            34,
-                                                                                            0)),
-                                           issue_date:
-                                               NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 6),
-                                                                  NaiveTime::from_hms_milli(19,
-                                                                                            3,
-                                                                                            34,
-                                                                                            0)),
-                                       });
+        let expected =
+            PlanbToken::new(PlanbHeader {
+                                key_id: String::from("testkey-es256"),
+                                algorithm: String::from("ES256"),
+                            },
+                            PlanbPayload {
+                                subject: String::from("test2"),
+                                realm: String::from("/services"),
+                                scopes: vec![String::from("cn")],
+                                issuer: String::from("B"),
+                                expiration_date_utc:
+                                    NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 7),
+                                                       NaiveTime::from_hms_milli(3, 3, 34, 0)),
+                                issue_date_utc: NaiveDateTime::new(NaiveDate::from_ymd(2016, 3, 6),
+                                                                   NaiveTime::from_hms_milli(19,
+                                                                                             3,
+                                                                                             34,
+                                                                                             0)),
+                            });
 
         let result = PlanbToken::from_str(sample).unwrap();
 
