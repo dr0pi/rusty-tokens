@@ -1,3 +1,4 @@
+use std::thread::JoinHandle;
 use hyper;
 use hyper::header::{Headers, Authorization, Basic};
 use hyper::client::response::Response;
@@ -14,7 +15,7 @@ impl HyperTokenManager {
                   credentials_provider: U,
                   url: String,
                   realm: String)
-                  -> Result<SelfUpdatingTokenManager, InitializationError>
+                  -> Result<(SelfUpdatingTokenManager, JoinHandle<()>), InitializationError>
         where U: CredentialsPairProvider + Send + 'static
     {
         let acccess_token_provider = HyperAccessTokenProvider {

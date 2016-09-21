@@ -1,4 +1,5 @@
-use super::{Credentials, CredentialsError, UserCredentialsProvider, ClientCredentialsProvider};
+use super::{Credentials, CredentialsError, UserCredentialsProvider, ClientCredentialsProvider,
+            CredentialsPairProvider};
 
 pub struct StaticCredentialsProvider {
     client_credentials: Credentials,
@@ -35,3 +36,5 @@ impl ClientCredentialsProvider for StaticCredentialsProvider {
         Ok(self.client_credentials.clone())
     }
 }
+
+impl CredentialsPairProvider for StaticCredentialsProvider {}

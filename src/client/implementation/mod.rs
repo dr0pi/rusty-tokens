@@ -1,5 +1,6 @@
 use std::fmt;
 use std::error::Error;
+use std::thread::JoinHandle;
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 use chrono::NaiveDateTime;
@@ -46,7 +47,7 @@ impl SelfUpdatingTokenManager {
     pub fn new<T, U>(conf: SelfUpdatingTokenManagerConfig,
                      credentials_provider: U,
                      access_token_provider: T)
-                     -> Result<SelfUpdatingTokenManager, InitializationError>
+                     -> Result<(SelfUpdatingTokenManager, JoinHandle<()>), InitializationError>
         where T: AccessTokenProvider + Send + 'static,
               U: CredentialsPairProvider + Send + 'static
     {
@@ -54,12 +55,12 @@ impl SelfUpdatingTokenManager {
             token_state: Arc::new(RwLock::new(HashMap::new())),
             stop_requested: Arc::new(RwLock::new(false)),
         };
-        try!{manager_loop::start_manager(provider.token_state.clone(),
+        let join_handle = try!{manager_loop::start_manager(provider.token_state.clone(),
                       credentials_provider,
                       access_token_provider,
                       conf,
                       provider.stop_requested.clone())};
-        Ok(provider)
+        Ok((provider, join_handle))
     }
 }
 

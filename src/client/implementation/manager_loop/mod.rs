@@ -27,13 +27,13 @@ pub fn start_manager<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult
                            access_token_provider: T,
                            conf: SelfUpdatingTokenManagerConfig,
                            stop_requested: Arc<RwLock<bool>>)
-                           -> Result<(), InitializationError>
+                           -> Result<thread::JoinHandle<()>, InitializationError>
     where T: AccessTokenProvider + Send + 'static,
           U: CredentialsPairProvider + Send + 'static
 {
     info!("Manager starting.");
 
-    let _join_handle = thread::spawn(move || {
+    let join_handle = thread::spawn(move || {
         let mut managed_token_data = Vec::new();
         initialize(&mut managed_token_data, &conf.managed_tokens);
 
@@ -45,7 +45,7 @@ pub fn start_manager<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult
                      conf.warning_percentage_threshold,
                      stop_requested);
     });
-    Ok(())
+    Ok(join_handle)
 }
 
 fn initialize<'a>(token_data_buffer: &mut Vec<TokenData<'a>>,
@@ -117,7 +117,8 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                                   token_data.token_name,
                                   err);
                         } else {
-                            error!("Could not update expired token {}: {}",
+                            error!("Could not update expired({}) token {}: {}",
+                            NaiveDateTime::from_num_seconds_from_unix_epoch(token_data.valid_until, 0),
                                    token_data.token_name,
                                    err);
                             token_states_to_update.push((token_data.token_name.clone(),
