@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::thread;
 use std::sync::{Arc, RwLock};
 use std::cell::Cell;
-use chrono::*;
 use std::time::Duration as TDuration;
+use chrono::*;
 use {Scope, Token};
 use client::TokenResult;
 use client::credentials::{Credentials, CredentialsPair, StaticCredentialsProvider};
@@ -219,23 +219,29 @@ fn basic_loop_iteration() {
     });
 
     let mut collected_tokens = Vec::new();
+    thread::sleep(TDuration::from_secs(3));
+    {
+        let lock = manager_state.read().unwrap();
+        let token_result: TokenResult = lock.get("my_token").unwrap().clone();
+        if token_result.is_ok() {
+            collected_tokens.push(token_result.unwrap());
+        }
+    }
     thread::sleep(TDuration::from_secs(5));
     {
         let lock = manager_state.read().unwrap();
         let token_result: TokenResult = lock.get("my_token").unwrap().clone();
-        collected_tokens.push(token_result.unwrap());
+        if token_result.is_ok() {
+            collected_tokens.push(token_result.unwrap());
+        }
     }
-    thread::sleep(TDuration::from_secs(10));
+    thread::sleep(TDuration::from_secs(5));
     {
         let lock = manager_state.read().unwrap();
         let token_result: TokenResult = lock.get("my_token").unwrap().clone();
-        collected_tokens.push(token_result.unwrap());
-    }
-    thread::sleep(TDuration::from_secs(10));
-    {
-        let lock = manager_state.read().unwrap();
-        let token_result: TokenResult = lock.get("my_token").unwrap().clone();
-        collected_tokens.push(token_result.unwrap());
+        if token_result.is_ok() {
+            collected_tokens.push(token_result.unwrap());
+        }
     }
 
     {

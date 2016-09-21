@@ -161,7 +161,8 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
 
         match calc_sleep_duration(UTC::now().timestamp(), next_update_at) {
             duration if duration.as_secs() == 0u64 => {
-                info!("Starting token update iteration immediately.")
+                info!("Starting token update iteration in 50 ms.");
+                thread::sleep(TDuration::from_millis(50));
             }
             duration => {
                 info!("Starting next token update iteration in {:?}.", duration);
