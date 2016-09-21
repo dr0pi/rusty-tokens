@@ -136,7 +136,7 @@ fn evaluate_response(response: &mut Response) -> RequestAccessTokenResult {
         }
         status => {
             let mut buf = String::new();
-            let _ = response.read_to_string(&mut buf);
+            let _ = try!{response.read_to_string(&mut buf)};
             Err(RequestAccessTokenError::RequestError {
                 status: status.to_u16(),
                 body: buf,
