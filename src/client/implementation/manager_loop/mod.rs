@@ -104,9 +104,9 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                     Ok(_) => {
                         match token_data.token {
                             Some(ref token) =>
-                            token_states_to_update.push((token_data.token_name.clone(), Ok(token.clone()))),
+                                token_states_to_update.push((token_data.token_name, Ok(token.clone()))),
                             None =>
-                            token_states_to_update.push((token_data.token_name.clone(),
+                                token_states_to_update.push((token_data.token_name,
                                                          Err(TokenError::NoToken))),
                         }
                     }
@@ -134,7 +134,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
             next_update_at = min(next_update_at, token_data.update_latest);
         }
 
-        {
+        if !token_states_to_update.is_empty() {
             let mut unlocked_manager_state = manager_state.write().unwrap();
             for to_update in &token_states_to_update {
                 unlocked_manager_state.insert(to_update.0.to_owned(), to_update.1.clone());
@@ -161,11 +161,11 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
 
         match calc_sleep_duration(UTC::now().timestamp(), next_update_at, 5) {
             duration if duration.as_secs() == 0u64 => {
-                info!("Starting token update iteration in 50 ms.");
-                thread::sleep(TDuration::from_millis(50));
+                debug!("Starting token update iteration in 100 ms.");
+                thread::sleep(TDuration::from_millis(100));
             }
             duration => {
-                info!("Starting next token update iteration in {:?}.", duration);
+                debug!("Starting next token update iteration in {:?}.", duration);
                 thread::sleep(duration)
             }
         };
@@ -175,10 +175,10 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
     info!("Manager loop stopped.");
 }
 
-fn calc_sleep_duration(now: i64, next_update_at: i64, min_sleep_duration: u64) -> TDuration {
+fn calc_sleep_duration(now: i64, next_update_at: i64, max_sleep_duration: u64) -> TDuration {
     if (next_update_at - now) > 0i64 {
         let next_update_in: u64 = (next_update_at - now) as u64;
-        TDuration::from_secs(min(min_sleep_duration, next_update_in))
+        TDuration::from_secs(min(max_sleep_duration, next_update_in))
     } else {
         TDuration::from_secs(0u64)
     }
