@@ -20,15 +20,7 @@ impl UserFileCredentialsProvider {
     }
 
     pub fn new_from_env() -> Result<UserFileCredentialsProvider, InitializationError> {
-        let mut path_buf = PathBuf::new();
-        match env::var("CREDENTIALS_DIR") {
-            Ok(credentials_dir) => path_buf.push(credentials_dir),
-            Err(err) => {
-                return Err(InitializationError {
-                    message: format!("Error reading CREDENTIALS_DIR var: {}", err),
-                })
-            }
-        }
+        let mut path_buf = try!{get_credentials_dir_from_env()};
 
         match env::var("RUSTY_TOKENS_USER_CREDENTIALS_FILE_NAME") {
             Ok(user_filename) => path_buf.push(user_filename),
@@ -64,7 +56,8 @@ impl ClientFileCredentialsProvider {
     }
 
     pub fn new_from_env() -> Result<ClientFileCredentialsProvider, InitializationError> {
-        let mut path_buf = PathBuf::new();
+        let mut path_buf = try!{get_credentials_dir_from_env()};
+
         match env::var("CREDENTIALS_DIR") {
             Ok(credentials_dir) => path_buf.push(credentials_dir),
             Err(err) => {
@@ -185,6 +178,37 @@ fn parse_user_json(to_parse: &str) -> Result<Credentials, CredentialsError> {
         }
     }
 }
+
+fn get_credentials_dir_from_env() -> Result<PathBuf, InitializationError> {
+    let env_var_name = match env::var("RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR") {
+        Ok(env_var_name) => env_var_name,
+        Err(env::VarError::NotPresent) => String::from("RUSTY_TOKENS_CREDENTIALS_DIR"),
+        Err(err) => {
+            return Err(InitializationError {
+                message: format!("Error reading RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR env var: {}",
+                                 err),
+            })
+        }
+    };
+
+    let mut path = PathBuf::new();
+    match env::var(&env_var_name) {
+        Ok(credentials_dir) => {
+            info!("Credentials directory is {}.", &credentials_dir);
+            path.push(credentials_dir);
+            Ok(path)
+        }
+        Err(err) => {
+            Err(InitializationError {
+                message: format!("Error reading credentials directory from env var {}: {}",
+                                 &env_var_name,
+                                 err),
+            })
+        }
+
+    }
+}
+
 
 
 #[derive(RustcDecodable, PartialEq, Debug)]
