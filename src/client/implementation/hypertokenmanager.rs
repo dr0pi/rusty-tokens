@@ -1,6 +1,7 @@
 use std::thread::JoinHandle;
 use std::io::Read;
 use std::str::FromStr;
+use std::env;
 use url::form_urlencoded;
 use hyper;
 use hyper::header::{Headers, Authorization, Basic, ContentType};
@@ -10,8 +11,8 @@ use rustc_serialize::json;
 use jwt::planb::PlanbToken;
 use {InitializationError, Scope, Token};
 use client::credentials::{CredentialsPair, CredentialsPairProvider};
-use super::{SelfUpdatingTokenManager, SelfUpdatingTokenManagerConfig, AccessTokenProvider,
-            AccessToken, RequestAccessTokenResult, RequestAccessTokenError};
+use client::ManagedToken;
+use super::*;
 
 pub struct HyperTokenManager;
 
@@ -29,6 +30,22 @@ impl HyperTokenManager {
             full_url_with_realm: format!("{}?realm={}", url, realm),
         };
         SelfUpdatingTokenManager::new(config, credentials_provider, acccess_token_provider)
+    }
+
+    pub fn new_from_env
+        (http_client: hyper::Client,
+         managed_tokens: Vec<ManagedToken>)
+         -> Result<(SelfUpdatingTokenManager, JoinHandle<()>), InitializationError> {
+        let refresh_percentage_threshold_str =
+            try!{ env::var("RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR") };
+        let refresh_percentage_threshold = try!{ f32::from_str(&refresh_percentage_threshold_str) };
+
+        let warning_percentage_threshold_str =
+            try!{ env::var("RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR") };
+        let warning_percentage_threshold = try!{ f32::from_str(&warning_percentage_threshold_str) };
+
+
+        panic!("");
     }
 }
 

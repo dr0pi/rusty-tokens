@@ -18,6 +18,7 @@ extern crate url;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::num::ParseFloatError;
 
 use std::env::VarError;
 
@@ -97,6 +98,12 @@ impl Error for InitializationError {
 
 impl From<VarError> for InitializationError {
     fn from(err: VarError) -> Self {
-        InitializationError { message: err.description().to_owned() }
+        InitializationError { message: format!{"{}", err} }
+    }
+}
+
+impl From<ParseFloatError> for InitializationError {
+    fn from(err: ParseFloatError) -> Self {
+        InitializationError { message: format!{"{}", err} }
     }
 }

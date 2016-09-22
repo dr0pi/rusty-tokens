@@ -153,7 +153,6 @@ impl From<DecoderError> for RequestAccessTokenError {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     extern crate env_logger;
