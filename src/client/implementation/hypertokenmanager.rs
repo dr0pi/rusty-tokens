@@ -1,7 +1,7 @@
 use std::thread::JoinHandle;
 use std::io::Read;
-use std::str::FromStr;
 use std::env;
+use std::str::FromStr;
 use url::form_urlencoded;
 use hyper;
 use hyper::header::{Headers, Authorization, Basic, ContentType};
@@ -10,7 +10,7 @@ use hyper::status::StatusCode;
 use rustc_serialize::json;
 use jwt::planb::PlanbToken;
 use {InitializationError, Scope, Token};
-use client::credentials::{CredentialsPair, CredentialsPairProvider};
+use client::credentials::{CredentialsPair, CredentialsPairProvider, FileCredentialsProvider};
 use client::ManagedToken;
 use super::*;
 
@@ -32,20 +32,29 @@ impl HyperTokenManager {
         SelfUpdatingTokenManager::new(config, credentials_provider, acccess_token_provider)
     }
 
-    pub fn new_from_env
+    pub fn new_from_env<U>
+        (http_client: hyper::Client,
+         credentials_provider: U,
+         managed_tokens: Vec<ManagedToken>)
+         -> Result<(SelfUpdatingTokenManager, JoinHandle<()>), InitializationError>
+        where U: CredentialsPairProvider + Send + 'static
+    {
+        let config = try!{SelfUpdatingTokenManagerConfig::new_from_env(managed_tokens)};
+        let url = try!{get_token_provider_url_from_env()};
+        let realm = try!{env::var("RUSTY_TOKENS_TOKEN_PROVIDER_REALM")};
+        HyperTokenManager::new(config, http_client, credentials_provider, url, realm)
+    }
+
+    pub fn new_with_file_credentials_provider_from_env
         (http_client: hyper::Client,
          managed_tokens: Vec<ManagedToken>)
          -> Result<(SelfUpdatingTokenManager, JoinHandle<()>), InitializationError> {
-        let refresh_percentage_threshold_str =
-            try!{ env::var("RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR") };
-        let refresh_percentage_threshold = try!{ f32::from_str(&refresh_percentage_threshold_str) };
+        let config = try!{SelfUpdatingTokenManagerConfig::new_from_env(managed_tokens)};
+        let url = try!{get_token_provider_url_from_env()};
+        let realm = try!{env::var("RUSTY_TOKENS_TOKEN_PROVIDER_REALM")};
+        let credentials_provider = try!{FileCredentialsProvider::new_from_env()};
 
-        let warning_percentage_threshold_str =
-            try!{ env::var("RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR") };
-        let warning_percentage_threshold = try!{ f32::from_str(&warning_percentage_threshold_str) };
-
-
-        panic!("");
+        HyperTokenManager::new(config, http_client, credentials_provider, url, realm)
     }
 }
 
@@ -159,5 +168,36 @@ fn evaluate_response(response: &mut Response) -> RequestAccessTokenResult {
                 body: buf,
             })
         }
+    }
+}
+
+fn get_token_provider_url_from_env() -> Result<String, InitializationError> {
+    let env_var_name = match env::var("RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR") {
+        Ok(env_var_name) => env_var_name,
+        Err(env::VarError::NotPresent) => String::from("RUSTY_TOKENS_TOKEN_PROVIDER_URL"),
+        Err(err) => {
+            return Err(InitializationError {
+                message: format!("Error reading RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR env var: \
+                                  {}",
+                                 err),
+            })
+        }
+    };
+
+    let mut url = String::new();
+    match env::var(&env_var_name) {
+        Ok(provider_url) => {
+            info!("Token provider URL is {}.", &provider_url);
+            url.push_str(&provider_url);
+            Ok(url)
+        }
+        Err(err) => {
+            Err(InitializationError {
+                message: format!("Error reading Token Provider URL from env var {}: {}",
+                                 &env_var_name,
+                                 err),
+            })
+        }
+
     }
 }

@@ -5,6 +5,9 @@ use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 use std::convert::From;
 use std::io;
+use std::str::FromStr;
+use std::env;
+
 use rustc_serialize::json::DecoderError;
 use chrono::NaiveDateTime;
 use {Token, Scope, InitializationError};
@@ -22,6 +25,35 @@ pub struct SelfUpdatingTokenManagerConfig {
     pub refresh_percentage_threshold: f32,
     pub warning_percentage_threshold: f32,
     pub managed_tokens: Vec<ManagedToken>,
+}
+
+impl SelfUpdatingTokenManagerConfig {
+    pub fn new(managed_tokens: Vec<ManagedToken>,
+               refresh_percentage_threshold: f32,
+               warning_percentage_threshold: f32)
+               -> SelfUpdatingTokenManagerConfig {
+        SelfUpdatingTokenManagerConfig {
+            refresh_percentage_threshold: refresh_percentage_threshold,
+            warning_percentage_threshold: warning_percentage_threshold,
+            managed_tokens: managed_tokens,
+        }
+    }
+
+    pub fn new_from_env(managed_tokens: Vec<ManagedToken>)
+                        -> Result<SelfUpdatingTokenManagerConfig, InitializationError> {
+        let refresh_percentage_threshold_str =
+            try!{ env::var("RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR") };
+        let refresh_percentage_threshold = try!{ f32::from_str(&refresh_percentage_threshold_str) };
+
+        let warning_percentage_threshold_str =
+            try!{ env::var("RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR") };
+        let warning_percentage_threshold = try!{ f32::from_str(&warning_percentage_threshold_str) };
+        Ok(SelfUpdatingTokenManagerConfig {
+            refresh_percentage_threshold: refresh_percentage_threshold,
+            warning_percentage_threshold: warning_percentage_threshold,
+            managed_tokens: managed_tokens,
+        })
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
