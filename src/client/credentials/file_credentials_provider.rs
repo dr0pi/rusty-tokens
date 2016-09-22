@@ -1,10 +1,12 @@
 use std::io;
+use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::error::Error;
 use std::path::{PathBuf, Path};
 use rustc_serialize::json;
 
+use InitializationError;
 use super::{Credentials, CredentialsError, ClientCredentialsProvider, UserCredentialsProvider,
             CredentialsProvider};
 
@@ -15,6 +17,32 @@ pub struct UserFileCredentialsProvider {
 impl UserFileCredentialsProvider {
     pub fn new(path: &Path) -> UserFileCredentialsProvider {
         UserFileCredentialsProvider { path: PathBuf::from(path) }
+    }
+
+    pub fn new_from_env() -> Result<UserFileCredentialsProvider, InitializationError> {
+        let mut path_buf = PathBuf::new();
+        match env::var("CREDENTIALS_DIR") {
+            Ok(credentials_dir) => path_buf.push(credentials_dir),
+            Err(err) => {
+                return Err(InitializationError {
+                    message: format!("Error reading CREDENTIALS_DIR var: {}", err),
+                })
+            }
+        }
+
+        match env::var("RUSTY_TOKENS_USER_CREDENTIALS_FILE_NAME") {
+            Ok(user_filename) => path_buf.push(user_filename),
+            Err(err) => {
+                return Err(InitializationError {
+                    message: format!("Error reading \
+                                      RUSTY_TOKENS_USER_CREDENTIALS_FILE_NAME \
+                                      var: {}",
+                                     err),
+                })
+            }
+        }
+
+        Ok(UserFileCredentialsProvider { path: path_buf })
     }
 }
 
@@ -33,6 +61,32 @@ pub struct ClientFileCredentialsProvider {
 impl ClientFileCredentialsProvider {
     pub fn new(path: &Path) -> ClientFileCredentialsProvider {
         ClientFileCredentialsProvider { path: PathBuf::from(path) }
+    }
+
+    pub fn new_from_env() -> Result<ClientFileCredentialsProvider, InitializationError> {
+        let mut path_buf = PathBuf::new();
+        match env::var("CREDENTIALS_DIR") {
+            Ok(credentials_dir) => path_buf.push(credentials_dir),
+            Err(err) => {
+                return Err(InitializationError {
+                    message: format!("Error reading CREDENTIALS_DIR var: {}", err),
+                })
+            }
+        }
+
+        match env::var("RUSTY_TOKENS_CLIENT_CREDENTIALS_FILE_NAME") {
+            Ok(client_filename) => path_buf.push(client_filename),
+            Err(err) => {
+                return Err(InitializationError {
+                    message: format!("Error reading \
+                                      RUSTY_TOKENS_CLIENT_CREDENTIALS_FILE_NAME \
+                                      var: {}",
+                                     err),
+                })
+            }
+        }
+
+        Ok(ClientFileCredentialsProvider { path: path_buf })
     }
 }
 
@@ -61,6 +115,16 @@ impl FileCredentialsProvider {
 
         FileCredentialsProvider::create(ClientFileCredentialsProvider::new(client_path.as_path()),
                                         UserFileCredentialsProvider::new(user_path.as_path()))
+    }
+
+    pub fn new_from_env()
+        -> Result<CredentialsProvider<ClientFileCredentialsProvider, UserFileCredentialsProvider>,
+                  InitializationError>
+    {
+        let client_provider = try!{ ClientFileCredentialsProvider::new_from_env() };
+        let user_provider = try!{ UserFileCredentialsProvider::new_from_env() };
+
+        Ok(FileCredentialsProvider::create(client_provider, user_provider))
     }
 
     pub fn create
