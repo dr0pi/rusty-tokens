@@ -1,14 +1,19 @@
+//! Plan B JWT.
+//!
+//! A JWT Token according to [Plan B](https://github.com/zalando/planb-provider)
 use std::str::FromStr;
 use rustc_serialize::json::Json;
 use chrono::*;
 use super::*;
 
+/// The header of JWT token as returned by Plan B
 #[derive(PartialEq, Debug)]
 pub struct PlanbHeader {
     pub key_id: String,
     pub algorithm: String,
 }
 
+/// The payload of JWT token as returned by Plan B
 #[derive(PartialEq, Debug)]
 pub struct PlanbPayload {
     pub subject: String,
@@ -19,6 +24,7 @@ pub struct PlanbPayload {
     pub issue_date_utc: NaiveDateTime,
 }
 
+/// A JWT token as returned by Plan B
 #[derive(PartialEq, Debug)]
 pub struct PlanbToken {
     pub header: PlanbHeader,
@@ -26,6 +32,7 @@ pub struct PlanbToken {
 }
 
 impl PlanbToken {
+    /// Creates a new Plan B JWT token
     pub fn new(header: PlanbHeader, payload: PlanbPayload) -> PlanbToken {
         PlanbToken {
             header: header,
@@ -33,7 +40,9 @@ impl PlanbToken {
         }
     }
 
-    fn from_jwt_token(jwt_token: &JsonWebToken) -> Result<PlanbToken, &'static str> {
+    /// Takes a JWT token and makes a Plan B token from it.
+    /// May fail if the required fields for a Plan B JWT token are not supplied with the JWT token.
+    pub fn from_jwt_token(jwt_token: &JsonWebToken) -> Result<PlanbToken, &'static str> {
         let kid: &str = try!{
             jwt_token.get_registered_header(RegisteredHeader::KeyId).and_then(|json|
                 json.as_string()).ok_or("Custom field 'kid' is missing or not a String.") };

@@ -1,4 +1,4 @@
-
+//! `Credentials` are needed to receive a token from the `TokenProvider`.
 use std::io;
 use std::convert::From;
 use std::error::Error;
@@ -11,14 +11,25 @@ pub use self::static_provider::StaticCredentialsProvider;
 pub use self::file_credentials_provider::{FileCredentialsProvider, UserFileCredentialsProvider,
                                           ClientFileCredentialsProvider};
 
+/// The result of a credentials query.
 pub type CredentialsResult = Result<Credentials, CredentialsError>;
 
+/// Credentials contain an id which usually identifies a user and a secret to authenticate
+/// against a server.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Credentials {
+    /// Identifies the user or client
     pub id: String,
+    /// The secret to authenticate
     pub secret: String,
 }
 
+/// The token provider requires two credentials.
+///
+/// Theese are:
+///
+/// * One for the client
+/// * One for the user
 pub struct CredentialsPair {
     pub client_credentials: Credentials,
     pub user_credentials: Credentials,

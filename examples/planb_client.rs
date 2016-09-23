@@ -63,5 +63,5 @@ fn main() {
     manager.stop();
 
     join_handle.join();
-    info!("Stopped");
+    info!("=== >Stopped");
 }

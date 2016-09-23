@@ -10,8 +10,18 @@ use InitializationError;
 use super::{Credentials, CredentialsError, ClientCredentialsProvider, UserCredentialsProvider,
             CredentialsProvider};
 
+/// Reads user credentials from a file.
+///
+/// The file must be of the following format:
+/// ```
+/// {
+///     "application_username": "id",
+///     "application_password": "secret"
+/// }
+/// ```
 pub struct UserFileCredentialsProvider {
-    path: PathBuf,
+    /// The complete path to the credentials file.
+    pub path: PathBuf,
 }
 
 impl UserFileCredentialsProvider {
@@ -46,6 +56,15 @@ impl UserCredentialsProvider for UserFileCredentialsProvider {
 }
 
 
+/// Reads client credentials from a file.
+///
+/// The file must be of the following format:
+/// ```
+/// {
+///     "user_id": "id",
+///     "user_secret": "secret"
+/// }
+/// ```
 pub struct ClientFileCredentialsProvider {
     path: PathBuf,
 }

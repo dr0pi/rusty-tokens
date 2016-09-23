@@ -1,3 +1,4 @@
+//! Handling of [JWT Tokens](https://tools.ietf.org/html/rfc7519)
 use std::collections::HashMap;
 use std::str::FromStr;
 use rustc_serialize::base64::FromBase64;
@@ -70,13 +71,17 @@ impl RegisteredClaim {
     }
 }
 
+/// A [JWT Token](https://tools.ietf.org/html/rfc7519)
 #[derive(PartialEq, Debug)]
 pub struct JsonWebToken {
+    /// The header fields
     pub header: HashMap<String, Json>,
+    /// The payload fields
     pub payload: HashMap<String, Json>,
 }
 
 impl JsonWebToken {
+    /// Create a new empty instance
     pub fn new() -> JsonWebToken {
         JsonWebToken {
             header: HashMap::new(),
@@ -84,6 +89,7 @@ impl JsonWebToken {
         }
     }
 
+    /// Add a header value. Consumes the instance.
     pub fn add_header(self, header: &Header, value: Json) -> Self {
         let mut x = self;
         let tag: String = match *header {
@@ -107,6 +113,7 @@ impl JsonWebToken {
     }
 
 
+    /// Add a payload value. Consumes the instance.
     pub fn add_payload(self, for_claim: &Claim, value: Json) -> Self {
         let mut x = self;
         let tag: String = match *for_claim {
