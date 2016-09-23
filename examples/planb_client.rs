@@ -15,7 +15,8 @@ fn main() {
     env::set_var("RUST_LOG", "info");
     let _ = env_logger::init();
 
-    env::set_var("RUSTY_TOKENS_TOKEN_PROVIDER_URL", "http://www.examle.org");
+    env::set_var("RUSTY_TOKENS_TOKEN_PROVIDER_URL",
+                 "http://localhost:8080/oauth2/access_token");
     env::set_var("RUSTY_TOKENS_TOKEN_PROVIDER_REALM", "/services");
     env::set_var("RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR", "0.8");
     env::set_var("RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR", "0.9");
