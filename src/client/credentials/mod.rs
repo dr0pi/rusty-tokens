@@ -35,14 +35,17 @@ pub struct CredentialsPair {
     pub user_credentials: Credentials,
 }
 
+/// A `CredentialsProvider` that provides client `Credentials`
 pub trait ClientCredentialsProvider {
     fn get_client_credentials(&self) -> CredentialsResult;
 }
 
+/// A `CredentialsProvider` that provides user `Credentials`
 pub trait UserCredentialsProvider {
     fn get_user_credentials(&self) -> CredentialsResult;
 }
 
+/// A `CredentialsProvider` that provides both user and client `Credentials`
 pub trait CredentialsPairProvider
     : ClientCredentialsProvider + UserCredentialsProvider {
     fn get_credentials_pair(&self) -> Result<CredentialsPair, CredentialsError> {
@@ -55,6 +58,7 @@ pub trait CredentialsPairProvider
     }
 }
 
+/// The `CredentialsProvider` that provides both user and client `Credentials`
 pub struct CredentialsProvider<C: ClientCredentialsProvider, U: UserCredentialsProvider> {
     client_credentials_provider: C,
     user_credentials_provider: U,
@@ -86,6 +90,7 @@ impl<C: ClientCredentialsProvider, U: UserCredentialsProvider> ClientCredentials
 impl<C: ClientCredentialsProvider, U: UserCredentialsProvider> CredentialsPairProvider for CredentialsProvider<C, U>{}
 
 
+/// Errors that can occur when credentials could not be fetched.
 #[derive(Debug, Clone)]
 pub enum CredentialsError {
     IoError {

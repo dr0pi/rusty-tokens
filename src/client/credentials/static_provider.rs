@@ -1,6 +1,8 @@
+//! Credentials provider that uses fixed credentials
 use super::{Credentials, CredentialsError, UserCredentialsProvider, ClientCredentialsProvider,
             CredentialsPairProvider};
 
+/// Uses fixed credentials
 pub struct StaticCredentialsProvider {
     client_credentials: Credentials,
     user_credentials: Credentials,

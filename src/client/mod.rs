@@ -66,9 +66,13 @@ pub trait TokenManager {
 /// The errors that can occure when looking up a `Token`.
 #[derive(Debug, Clone)]
 pub enum TokenError {
+    /// There is no `Token`
     NoToken,
+    /// Something that can not be further specified happended
     InternalError(String),
+    /// The required `Credentials` could not be fetched
     CredentialsError(CredentialsError),
+    /// The `Token` could not be requested
     RequestError(RequestAccessTokenError),
 }
 

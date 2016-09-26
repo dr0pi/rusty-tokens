@@ -1,3 +1,21 @@
+//! Credentials provider that fetches credentials from files whenever credentials are requested.
+//!
+//! The client credentials file must be of the following format:
+//! ```
+//! {
+//!     "user_id": "id",
+//!     "user_secret": "secret"
+//! }
+//! ```
+//!
+//! The user credentials file must be of the following format:
+//! ```
+//! {
+//!     "application_username": "id",
+//!     "application_password": "secret"
+//! }
+//! ```
+
 use std::io;
 use std::env;
 use std::fs::File;
@@ -25,10 +43,20 @@ pub struct UserFileCredentialsProvider {
 }
 
 impl UserFileCredentialsProvider {
+    /// Create a new instance given the complete path
     pub fn new(path: &Path) -> UserFileCredentialsProvider {
         UserFileCredentialsProvider { path: PathBuf::from(path) }
     }
 
+
+    /// Create a new instance from environment variables
+    ///
+    /// Used vars:
+    ///
+    /// * RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR(optional): Use this to override the name of the env var for credentials file directory.
+    /// If not set RUSTY_TOKENS_CREDENTIALS_DIR will be used as a default.
+    /// * RUSTY_TOKENS_CREDENTIALS_DIR(special): Will be used to set the credentials file directory if not overridden by RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR.
+    /// * RUSTY_TOKENS_USER_CREDENTIALS_FILE_NAME(mandatory): The file name of the credentials file, e.g "user.json".
     pub fn new_from_env() -> Result<UserFileCredentialsProvider, InitializationError> {
         let mut path_buf = try!{get_credentials_dir_from_env()};
 
@@ -70,10 +98,19 @@ pub struct ClientFileCredentialsProvider {
 }
 
 impl ClientFileCredentialsProvider {
+    /// Create a new instance give the complete path the the client credentials file.
     pub fn new(path: &Path) -> ClientFileCredentialsProvider {
         ClientFileCredentialsProvider { path: PathBuf::from(path) }
     }
 
+    /// Create a new instance from environment variables
+    ///
+    /// Used vars:
+    ///
+    /// * RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR(optional): Use this to override the name of the env var for credentials file directory.
+    /// If not set RUSTY_TOKENS_CREDENTIALS_DIR will be used as a default.
+    /// * RUSTY_TOKENS_CREDENTIALS_DIR(special): Will be used to set the credentials file directory if not overridden by RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR.
+    /// * RUSTY_TOKENS_CLIENT_CREDENTIALS_FILE_NAME(mandatory): The file name of the credentials file, e.g "client.json".
     pub fn new_from_env() -> Result<ClientFileCredentialsProvider, InitializationError> {
         let mut path_buf = try!{get_credentials_dir_from_env()};
 
@@ -115,20 +152,31 @@ pub struct FileCredentialsProvider {
 }
 
 impl FileCredentialsProvider {
+    /// Create a new instance given the credentials directory and both the filenames
+    /// of the client and user credentials file
     pub fn new
-        (path: &str,
+        (credentials_dir: &str,
          client_filename: &str,
          user_filename: &str)
          -> CredentialsProvider<ClientFileCredentialsProvider, UserFileCredentialsProvider> {
-        let mut client_path = PathBuf::from(path);
+        let mut client_path = PathBuf::from(credentials_dir);
         client_path.push(client_filename);
-        let mut user_path = PathBuf::from(path);
+        let mut user_path = PathBuf::from(credentials_dir);
         user_path.push(user_filename);
 
         FileCredentialsProvider::create(ClientFileCredentialsProvider::new(client_path.as_path()),
                                         UserFileCredentialsProvider::new(user_path.as_path()))
     }
 
+    /// Create a new instance from environment variables
+    ///
+    /// Used vars:
+    ///
+    /// * RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR(optional): Use this to override the name of the env var for credentials file directory.
+    /// If not set RUSTY_TOKENS_CREDENTIALS_DIR will be used as a default.
+    /// * RUSTY_TOKENS_CREDENTIALS_DIR(special): Will be used to set the credentials file directory if not overridden by RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR.
+    /// * RUSTY_TOKENS_USER_CREDENTIALS_FILE_NAME(mandatory): The file name of the user credentials file, e.g "user.json".
+    /// * RUSTY_TOKENS_CLIENT_CREDENTIALS_FILE_NAME(mandatory): The file name of the client credentials file, e.g "client.json".
     pub fn new_from_env()
         -> Result<CredentialsProvider<ClientFileCredentialsProvider, UserFileCredentialsProvider>,
                   InitializationError>
