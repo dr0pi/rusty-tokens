@@ -8,7 +8,7 @@ use InitializationError;
 use {Token, Scope};
 use client::credentials::{CredentialsPair, CredentialsPairProvider};
 use client::{TokenResult, TokenError, ManagedToken};
-use super::{RequestAccessTokenResult, AccessToken, AccessTokenProvider, RequestAccessTokenError,
+use super::{AccessToken, AccessTokenProvider, RequestAccessTokenError,
             SelfUpdatingTokenManagerConfig};
 
 
@@ -92,7 +92,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
 
         let now = UTC::now().timestamp();
 
-        let mut next_update_at = UTC::now().timestamp() + 3600;
+        let mut next_update_at = UTC::now().timestamp() + 3600 * 3;
         for ref mut token_data in &mut mutable_managed_token_data {
             if token_data.update_latest <= now {
                 let res = update_token_data(token_data,
@@ -113,7 +113,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                     Err(err) => {
                         if token_data.valid_until > now {
                             warn!("Could not update still valid token \
-                                   {}: {}",
+                                   '{}': {}",
                                   token_data.token_name,
                                   err);
                         } else {
@@ -128,7 +128,10 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                 }
             }
             if token_data.warn_after < now {
-                warn!("Token {} becomes to old.", &token_data.token_name);
+                warn!("Token {} becomes to old(valid until {}, update latest was {}).",
+                      &token_data.token_name,
+                      NaiveDateTime::from_num_seconds_from_unix_epoch(token_data.valid_until, 0),
+                      NaiveDateTime::from_num_seconds_from_unix_epoch(token_data.update_latest, 0));
             }
 
             next_update_at = min(next_update_at, token_data.update_latest);
@@ -161,7 +164,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
 
         match calc_sleep_duration(UTC::now().timestamp(), next_update_at, 5) {
             duration if duration.as_secs() == 0u64 => {
-                debug!("Starting token update iteration in 100 ms.");
+                debug!("Starting next token update iteration in 100 ms.");
                 thread::sleep(TDuration::from_millis(100));
             }
             duration => {
@@ -218,6 +221,11 @@ fn update_token_data_with_access_token(now_utc: i64,
     token_data.warn_after = warn_after;
     token_data.valid_until = valid_until_utc;
     token_data.token = Some(access_token.token);
+    debug!("Updated token data for '{}'. Valid until: {}, Update latest: {}, Warn after: {}",
+           &token_data.token_name,
+           valid_until_utc,
+           update_latest,
+           warn_after);
 }
 
 fn scale_time(now: i64, later: i64, factor: f32) -> i64 {

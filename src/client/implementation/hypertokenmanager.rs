@@ -66,6 +66,7 @@ struct HyperAccessTokenProvider {
 #[derive(RustcDecodable, Debug)]
 struct PlanBAccesTokenResponse {
     access_token: String,
+    expires_in: u64,
 }
 
 impl HyperAccessTokenProvider {
@@ -152,6 +153,8 @@ fn evaluate_response(response: &mut Response) -> RequestAccessTokenResult {
             let mut buf = String::new();
             let _ = try!{response.read_to_string(&mut buf)};
             let decoded_response = try!{json::decode::<PlanBAccesTokenResponse>(&buf)};
+            debug!("Received a token that expires in {} seconds",
+                   decoded_response.expires_in);
             let planb_token = try!{PlanbToken::from_str(&decoded_response.access_token).map_err(|err|
                 RequestAccessTokenError::ParsingError(format!("Failed to parse response as a Plan B token: {}", err)))};
             Ok(AccessToken {
