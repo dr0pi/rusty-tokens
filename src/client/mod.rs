@@ -2,7 +2,7 @@
 //! need `Token`s to authenticate/authorize with a resource server.
 //!
 //! You can use a `TokenManager` to manage multiple tokens.
-//! A `TokenManager` is manages `Tokens` configured by using 'ManagedTokens'
+//! A `TokenManager` is manages `Tokens` configured by using `ManagedToken`s
 //! which have a name by which you can lookup a `Token`.
 use std::convert::From;
 use super::{Token, Scope};

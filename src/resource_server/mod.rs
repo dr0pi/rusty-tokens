@@ -190,10 +190,10 @@ impl fmt::Display for AuthorizationServerError {
 impl Error for AuthorizationServerError {
     fn description(&self) -> &str {
         match *self {
-            AuthorizationServerError::NotAuthenticated { ref message } => message.as_ref(),
-            AuthorizationServerError::TokenInfoUnparsable { ref message } => message.as_ref(),
-            AuthorizationServerError::Connection { ref message } => message.as_ref(),
-            AuthorizationServerError::Unknown { ref message } => message.as_ref(),
+            AuthorizationServerError::NotAuthenticated { ref message } |
+            AuthorizationServerError::TokenInfoUnparsable { ref message } |
+            AuthorizationServerError::Connection { ref message } |
+            AuthorizationServerError::Unknown { ref message } |
             AuthorizationServerError::IoError { ref message } => message.as_ref(),
         }
     }

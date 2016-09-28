@@ -173,12 +173,12 @@ impl fmt::Display for RequestAccessTokenError {
 impl Error for RequestAccessTokenError {
     fn description(&self) -> &str {
         match *self {
-            RequestAccessTokenError::InternalError(ref message) => message.as_ref(),
-            RequestAccessTokenError::ConnectionError(ref message) => message.as_ref(),
-            RequestAccessTokenError::RequestError { .. } => "A request failed",
-            RequestAccessTokenError::InvalidCredentials(ref message) => message.as_ref(),
-            RequestAccessTokenError::ParsingError(ref message) => message.as_ref(),
+            RequestAccessTokenError::InternalError(ref message) |
+            RequestAccessTokenError::ConnectionError(ref message) |
+            RequestAccessTokenError::InvalidCredentials(ref message) |
+            RequestAccessTokenError::ParsingError(ref message) |
             RequestAccessTokenError::IoError(ref message) => message.as_ref(),
+            RequestAccessTokenError::RequestError { .. } => "A request failed",
         }
     }
 

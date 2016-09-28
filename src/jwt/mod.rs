@@ -94,7 +94,7 @@ impl JsonWebToken {
         let mut x = self;
         let tag: String = match *header {
             Header::Registered(ref key) => String::from(key.to_key()),
-            Header::Custom(ref key) => key.to_string(),
+            Header::Custom(key) => key.to_string(),
         };
         x.header.insert(tag, value);
         x
@@ -118,7 +118,7 @@ impl JsonWebToken {
         let mut x = self;
         let tag: String = match *for_claim {
             Claim::Registered(ref rclaim) => String::from(rclaim.to_key()),
-            Claim::Custom(ref key) => key.to_string(),
+            Claim::Custom(key) => key.to_string(),
         };
         x.payload.insert(tag, value);
         x

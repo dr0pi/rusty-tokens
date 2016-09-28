@@ -48,8 +48,7 @@ pub fn start_manager<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult
     Ok(join_handle)
 }
 
-fn initialize<'a>(token_data_buffer: &mut Vec<TokenData<'a>>,
-                  managed_tokens: &'a Vec<ManagedToken>) {
+fn initialize<'a>(token_data_buffer: &mut Vec<TokenData<'a>>, managed_tokens: &'a [ManagedToken]) {
     let t = UTC::now().timestamp();
     for managed_token in managed_tokens {
         token_data_buffer.push(TokenData {
@@ -121,7 +120,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                             NaiveDateTime::from_num_seconds_from_unix_epoch(token_data.valid_until, 0),
                                    token_data.token_name,
                                    err);
-                            token_states_to_update.push((token_data.token_name.clone(),
+                            token_states_to_update.push((token_data.token_name,
                                                          Err(TokenError::RequestError(err))));
                         }
                     }

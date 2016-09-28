@@ -61,7 +61,7 @@ impl HyperTokenManager {
     }
 
     /// Creates a new instance from environment variables. The used `CredentialsProvider` is
-    /// a `FileCredentialsProvider` that will also be configured by environment variuables.
+    /// a [`FileCredentialsProvider`](struct.FileCredentialsProvider) that will also be configured by environment variuables.
     ///
     /// Used vars:
     ///
