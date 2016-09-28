@@ -93,6 +93,7 @@ pub struct SelfUpdatingTokenManager {
 
 impl SelfUpdatingTokenManager {
     /// Create a new instance from scratch
+    #[must_use]
     pub fn new<T, U>(conf: SelfUpdatingTokenManagerConfig,
                      credentials_provider: U,
                      access_token_provider: T)

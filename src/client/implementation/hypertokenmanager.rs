@@ -19,6 +19,7 @@ pub struct HyperTokenManager;
 /// A `TokenManager` that uses `hyper` to fetch `Tokens` remotely.
 impl HyperTokenManager {
     /// Creates a new instance from scratch
+    #[must_use]
     pub fn new<U>(config: SelfUpdatingTokenManagerConfig,
                   http_client: hyper::Client,
                   credentials_provider: U,
@@ -47,6 +48,7 @@ impl HyperTokenManager {
     /// * `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after which a new one will be requested.
     /// * `RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after a warning will be logged.
     /// Should be greater than `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`.
+    #[must_use]
     pub fn new_from_env<U>
         (http_client: hyper::Client,
          credentials_provider: U,
@@ -74,6 +76,7 @@ impl HyperTokenManager {
     /// * `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after which a new one will be requested.
     /// * `RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after a warning will be logged.
     /// Should be greater than `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`.
+    #[must_use]
     pub fn new_with_file_credentials_provider_from_env
         (http_client: hyper::Client,
          managed_tokens: Vec<ManagedToken>)
