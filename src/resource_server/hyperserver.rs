@@ -64,12 +64,12 @@ impl AuthorizationHyperServer {
     ///
     /// Used vars:
     ///
-    /// * RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR(optional): Use this to override the default env var for the token info URL.
-    /// If not set RUSTY_TOKENS_TOKEN_INFO_URL will be used as a default.
-    /// * RUSTY_TOKENS_TOKEN_INFO_URL(special): Will be used to set the token info URL if not overriden by RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR.
-    /// If RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR is not set, this var is mandatory.
-    /// * RUSTY_TOKENS_TOKEN_INFO_URL_QUERY_PARAMETER(mandatory): The name of the query parameter used for the token info URL and the fallback URL if set.
-    /// * RUSTY_TOKENS_FALLBACK_TOKEN_INFO_URL(optional): A fallback token info URL to be used if the primary one fails.
+    /// * `RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR`(optional): Use this to override the default env var for the token info URL.
+    /// If not set `RUSTY_TOKENS_TOKEN_INFO_URL` will be used as a default.
+    /// * `RUSTY_TOKENS_TOKEN_INFO_URL`(special): Will be used to set the token info URL if not overriden by `RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR`.
+    /// If `RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR` is not set, this var is mandatory.
+    /// * `RUSTY_TOKENS_TOKEN_INFO_URL_QUERY_PARAMETER`(mandatory): The name of the query parameter used for the token info URL and the fallback URL if set.
+    /// * `RUSTY_TOKENS_FALLBACK_TOKEN_INFO_URL`(optional): A fallback token info URL to be used if the primary one fails.
     pub fn from_env(http_client: Client) -> Result<AuthorizationHyperServer, InitializationError> {
         let token_info_url = match env::var("RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR") {
             Ok(value) => {

@@ -16,7 +16,9 @@ use super::*;
 
 pub struct HyperTokenManager;
 
+/// A `TokenManager` that uses `hyper` to fetch `Tokens` remotely.
 impl HyperTokenManager {
+    /// Creates a new instance from scratch
     pub fn new<U>(config: SelfUpdatingTokenManagerConfig,
                   http_client: hyper::Client,
                   credentials_provider: U,
@@ -32,6 +34,19 @@ impl HyperTokenManager {
         SelfUpdatingTokenManager::new(config, credentials_provider, acccess_token_provider)
     }
 
+    /// Creates a new instance from environment variables. The `CredentialsProvider` still has to be supplied manually.
+    ///
+    /// Used vars:
+    ///
+    /// * `RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR`(optional): Use this to override the default env var for the token provider URL.
+    /// If not set `RUSTY_TOKENS_TOKEN_PROVIDER_URL` will be used as a default.
+    /// * `RUSTY_TOKENS_TOKEN_PROVIDER_URL`(special): Will be used to set the token provider URL if not overriden by `RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR`.
+    /// If `RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR` is not set, this var is mandatory.
+    /// * `RUSTY_TOKENS_TOKEN_PROVIDER_REALM`(mandatory): The name realm for the `Token`.
+    /// * `RUSTY_TOKENS_FALLBACK_TOKEN_PROVIDER_URL`(optional): A fallback provider info URL to be used if the primary one fails.
+    /// * `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after which a new one will be requested.
+    /// * `RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after a warning will be logged.
+    /// Should be greater than `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`.
     pub fn new_from_env<U>
         (http_client: hyper::Client,
          credentials_provider: U,
@@ -45,6 +60,20 @@ impl HyperTokenManager {
         HyperTokenManager::new(config, http_client, credentials_provider, url, realm)
     }
 
+    /// Creates a new instance from environment variables. The used `CredentialsProvider` is
+    /// a `FileCredentialsProvider` that will also be configured by environment variuables.
+    ///
+    /// Used vars:
+    ///
+    /// * `RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR`(optional): Use this to override the default env var for the token provider URL.
+    /// If not set `RUSTY_TOKENS_TOKEN_PROVIDER_URL` will be used as a default.
+    /// * `RUSTY_TOKENS_TOKEN_PROVIDER_URL`(special): Will be used to set the token provider URL if not overriden by `RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR`.
+    /// If `RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR` is not set, this var is mandatory.
+    /// * `RUSTY_TOKENS_TOKEN_PROVIDER_REALM`(mandatory): The name realm for the `Token`.
+    /// * `RUSTY_TOKENS_FALLBACK_TOKEN_PROVIDER_URL`(optional): A fallback provider info URL to be used if the primary one fails.
+    /// * `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after which a new one will be requested.
+    /// * `RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after a warning will be logged.
+    /// Should be greater than `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`.
     pub fn new_with_file_credentials_provider_from_env
         (http_client: hyper::Client,
          managed_tokens: Vec<ManagedToken>)

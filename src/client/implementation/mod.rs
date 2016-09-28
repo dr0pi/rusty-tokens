@@ -20,7 +20,7 @@ mod manager_loop;
 #[cfg(feature = "hyper")]
 pub mod hypertokenmanager;
 
-
+/// Values needed to configure a `SelfUpdatingTokenManager`
 pub struct SelfUpdatingTokenManagerConfig {
     pub refresh_percentage_threshold: f32,
     pub warning_percentage_threshold: f32,
@@ -28,6 +28,7 @@ pub struct SelfUpdatingTokenManagerConfig {
 }
 
 impl SelfUpdatingTokenManagerConfig {
+    /// Create a new instance from scratch
     pub fn new(managed_tokens: Vec<ManagedToken>,
                refresh_percentage_threshold: f32,
                warning_percentage_threshold: f32)
@@ -39,6 +40,13 @@ impl SelfUpdatingTokenManagerConfig {
         }
     }
 
+    /// Creates a new instance with some environment variables
+    ///
+    /// Environment vars used:
+    ///
+    /// * `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after which a new one will be requested.
+    /// * `RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after a warning will be logged.
+    /// Should be greater than `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`.
     pub fn new_from_env(managed_tokens: Vec<ManagedToken>)
                         -> Result<SelfUpdatingTokenManagerConfig, InitializationError> {
         let refresh_percentage_threshold_str =
@@ -56,6 +64,7 @@ impl SelfUpdatingTokenManagerConfig {
     }
 }
 
+/// Returned by an `AccessTokenProvider`
 #[derive(Debug, PartialEq, Clone)]
 pub struct AccessToken {
     pub token: Token,
@@ -65,6 +74,7 @@ pub struct AccessToken {
 
 pub type RequestAccessTokenResult = Result<AccessToken, RequestAccessTokenError>;
 
+/// Fetches `AccessToken`s
 pub trait AccessTokenProvider {
     fn get_access_token(&self,
                         scopes: &[Scope],
@@ -72,6 +82,9 @@ pub trait AccessTokenProvider {
                         -> RequestAccessTokenResult;
 }
 
+/// A `TokenManager` that autonomously updates its `Token`s
+///
+/// Internally updates its state by using a seperate thread.
 #[derive(Clone)]
 pub struct SelfUpdatingTokenManager {
     token_state: Arc<RwLock<HashMap<String, TokenResult>>>,
@@ -79,6 +92,7 @@ pub struct SelfUpdatingTokenManager {
 }
 
 impl SelfUpdatingTokenManager {
+    /// Create a new instance from scratch
     pub fn new<T, U>(conf: SelfUpdatingTokenManagerConfig,
                      credentials_provider: U,
                      access_token_provider: T)

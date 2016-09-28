@@ -53,10 +53,10 @@ impl UserFileCredentialsProvider {
     ///
     /// Used vars:
     ///
-    /// * RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR(optional): Use this to override the name of the env var for credentials file directory.
-    /// If not set RUSTY_TOKENS_CREDENTIALS_DIR will be used as a default.
-    /// * RUSTY_TOKENS_CREDENTIALS_DIR(special): Will be used to set the credentials file directory if not overridden by RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR.
-    /// * RUSTY_TOKENS_USER_CREDENTIALS_FILE_NAME(mandatory): The file name of the credentials file, e.g "user.json".
+    /// * `RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR`(optional): Use this to override the name of the env var for credentials file directory.
+    /// If not set RUSTY_TOKENS_CREDENTIALS_DIR` will be used as a default.
+    /// * `RUSTY_TOKENS_CREDENTIALS_DIR`(special): Will be used to set the credentials file directory if not overridden by `RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR`.
+    /// * `RUSTY_TOKENS_USER_CREDENTIALS_FILE_NAME`(mandatory): The file name of the credentials file, e.g "user.json".
     pub fn new_from_env() -> Result<UserFileCredentialsProvider, InitializationError> {
         let mut path_buf = try!{get_credentials_dir_from_env()};
 
