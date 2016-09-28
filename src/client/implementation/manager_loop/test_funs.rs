@@ -9,8 +9,8 @@ fn calc_sleep_duration_when_next_update_is_overdue() {
     let now = 10i64;
     let next_update_at = 0i64;
 
-    let expected = Duration::from_secs(0u64);
-    let result = calc_sleep_duration(now, next_update_at, 10);
+    let expected = Duration::from_millis(100u64);
+    let result = calc_sleep_duration(now, next_update_at, Duration::from_secs(10));
 
     assert_eq!(expected, result);
 }
@@ -20,8 +20,8 @@ fn calc_sleep_duration_when_next_update_is_now() {
     let now = 10i64;
     let next_update_at = 10i64;
 
-    let expected = Duration::from_secs(0u64);
-    let result = calc_sleep_duration(now, next_update_at, 10);
+    let expected = Duration::from_millis(100u64);
+    let result = calc_sleep_duration(now, next_update_at, Duration::from_secs(10));
 
     assert_eq!(expected, result);
 }
@@ -32,7 +32,7 @@ fn calc_sleep_duration_when_next_update_is_soon() {
     let next_update_at = 20i64;
 
     let expected = Duration::from_secs(10u64);
-    let result = calc_sleep_duration(now, next_update_at, 10);
+    let result = calc_sleep_duration(now, next_update_at, Duration::from_secs(10));
 
     assert_eq!(expected, result);
 }

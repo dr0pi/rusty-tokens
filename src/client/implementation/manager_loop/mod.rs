@@ -161,28 +161,22 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
         debug!("Iteration took {:?}.", time_spent_in_iteration);
 
 
-        match calc_sleep_duration(UTC::now().timestamp(), next_update_at, 5) {
-            duration if duration.as_secs() == 0u64 => {
-                debug!("Starting next token update iteration in 100 ms.");
-                thread::sleep(TDuration::from_millis(100));
-            }
-            duration => {
-                debug!("Starting next token update iteration in {:?}.", duration);
-                thread::sleep(duration)
-            }
-        };
-
+        let sleep_dur = calc_sleep_duration(UTC::now().timestamp(),
+                                            next_update_at,
+                                            TDuration::from_secs(5));
+        debug!("Starting next token update iteration in {:?}.", sleep_dur);
+        thread::sleep(sleep_dur);
     }
 
     info!("Manager loop stopped.");
 }
 
-fn calc_sleep_duration(now: i64, next_update_at: i64, max_sleep_duration: u64) -> TDuration {
+fn calc_sleep_duration(now: i64, next_update_at: i64, max_sleep_duration: TDuration) -> TDuration {
     if (next_update_at - now) > 0i64 {
         let next_update_in: u64 = (next_update_at - now) as u64;
-        TDuration::from_secs(min(max_sleep_duration, next_update_in))
+        TDuration::from_secs(min(max_sleep_duration.as_secs(), next_update_in))
     } else {
-        TDuration::from_secs(0u64)
+        TDuration::from_millis(100u64)
     }
 }
 
