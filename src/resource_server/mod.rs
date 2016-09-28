@@ -1,4 +1,5 @@
-//! This module is intended to be used if you are a resource server.
+//! This module is intended to be used if you are a resource server
+//! and have to authenticate/authorize clients.
 //!
 //! It proxies an `AuthenticationServer` for you
 //!

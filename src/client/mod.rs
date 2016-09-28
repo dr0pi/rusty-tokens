@@ -1,4 +1,5 @@
-//! This module is intended to be used if you are a client of a resource server.
+//! This module is intended to be used if you are a client of a resource server and
+//! need `Token`s to authenticate/authorize with a resource server.
 //!
 //! You can use a `TokenManager` to manage multiple tokens.
 //! A `TokenManager` is manages `Tokens` configured by using 'ManagedTokens'
