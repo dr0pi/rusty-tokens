@@ -1,7 +1,8 @@
 //! Credentials provider that fetches credentials from files whenever credentials are requested.
 //!
 //! The client credentials file must be of the following format:
-//! ```
+//!
+//! ```javascript
 //! {
 //!     "user_id": "id",
 //!     "user_secret": "secret"
@@ -9,7 +10,8 @@
 //! ```
 //!
 //! The user credentials file must be of the following format:
-//! ```
+//!
+//! ```javascript
 //! {
 //!     "application_username": "id",
 //!     "application_password": "secret"
@@ -31,7 +33,8 @@ use super::{Credentials, CredentialsError, ClientCredentialsProvider, UserCreden
 /// Reads user credentials from a file.
 ///
 /// The file must be of the following format:
-/// ```
+///
+/// ```javascript
 /// {
 ///     "application_username": "id",
 ///     "application_password": "secret"
@@ -87,7 +90,8 @@ impl UserCredentialsProvider for UserFileCredentialsProvider {
 /// Reads client credentials from a file.
 ///
 /// The file must be of the following format:
-/// ```
+///
+/// ```javascript
 /// {
 ///     "user_id": "id",
 ///     "user_secret": "secret"
