@@ -2,9 +2,9 @@
 
 ## Introduction
 
-An authentication and authorization library for Rust.
+An OAUTH2 authentication and authorization library for Rust.
 
-This client part of library is(will be) basically a clone of https://github.com/zalando/go-tokens.
+The client part of library is inspired by https://github.com/zalando/go-tokens.
 
 This library can be used if for resource servers or clients that need
 authentication and authorization.
@@ -13,7 +13,7 @@ authentication and authorization.
 
 ## Project State
 
-Currenty we are working on implementing the client side.
+Client and resource server side are implemented. JWT lib has to be streamlined.
 
 ## Build
 
