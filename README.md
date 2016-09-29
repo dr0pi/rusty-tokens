@@ -2,22 +2,22 @@
 
 ## Introduction
 
-An authentication and authorization library for Rust.
+An OAUTH2 authentication and authorization library for Rust.
 
-This client part of library is(will be) basically a clone of https://github.com/zalando/go-tokens.
+The client part of library is inspired by https://github.com/zalando/go-tokens.
 
 This library can be used if for resource servers or clients that need
-authentication and authorization within the Zalando landscape.
+authentication and authorization.
 
 **Rusty Tokens** uses semantic versioning. So unless 1.0.0 is reached expect many breaking changes.
 
 ## Project State
 
-Currenty we are working on implementing the client side.
+Client and resource server side are implemented. JWT lib has to be streamlined.
 
 ## Build
 
-Clone this repository and run ```cargo build --features "all"```.
+Clone this repository and run ```cargo build```.
 
 You will need to have the ```open-ssl dev``` package for your system to compile the sources.
 
@@ -40,26 +40,38 @@ To use it in your project add the following to your ```Cargo.toml```:
 ```
 [dependencies.rusty-tokens]
 git = "https://github.com/zalando-incubator/rusty-tokens.git"
-tag = "v0.1.8"
+tag = "v0.2.0"
 features = ["hyper", "iron"]
 ```
 
 ## Configuration
 
-**Rusty Tokens** uses [dotenv](https://github.com/slapresta/rust-dotenv) for configuration.
+**Rusty Tokens** is configured by environment variables.
 
-That means everything is configurable by using environment variables.
+You wil find the exact descriptions of the environment vars within the documentation.
 
 ```
+# When you are a resource server
+
 RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR=RUSTY_TOKENS_TOKEN_INFO_URL
-RUSTY_TOKENS_TOKEN_INFO_URL="www.example.com"
+RUSTY_TOKENS_TOKEN_INFO_URL=hallo
 RUSTY_TOKENS_TOKEN_INFO_URL_QUERY_PARAMETER=tokenInfo
-RUSTY_TOKENS_FALLBACK_TOKEN_INFO_URL="www.example.com"
+RUSTY_TOKENS_FALLBACK_TOKEN_INFO_URL=https://somewhere.else
+
+# When you are a client
 
 RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR=RUSTY_TOKENS_TOKEN_PROVIDER_URL
-RUSTY_TOKENS_TOKEN_PROVIDER_URL="www.example.com"
-RUSTY_TOKENS_TOKEN_PRIVIDER_URL_QUERY_PARAMETER=tokenInfo
-RUSTY_TOKENS_FALLBACK_GENERATE_TOKEN_URL="www.example.com"
+RUSTY_TOKENS_TOKEN_PROVIDER_URL=https:www.example.org
+RUSTY_TOKENS_TOKEN_PROVIDER_REALM=/services
+RUSTY_TOKENS_FALLBACK_TOKEN_PROVIDER_URL=http://somewhere.else
+
+RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR=RUSTY_TOKENS_CREDENTIALS_DIR
+RUSTY_TOKENS_CREDENTIALS_DIR=/home/user/credentials
+RUSTY_TOKENS_USER_CREDENTIALS_FILE_NAME=user.json
+RUSTY_TOKENS_CLIENT_CREDENTIALS_FILE_NAME=client.json
+
+RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR=0.8
+RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR=0.9
 ```
 
 ## Examples
@@ -71,8 +83,8 @@ You can run an example with ```cargo run --example <example-name-here>```
 ## Task List
 
 - [ ] Have on online documentation
-- [ ] Stabilize the configuration
-- [ ] Implement the client side
+- [x] Stabilize the configuration
+- [x] Implement the client side
 
 
 ## Contributing(We need your help!)
