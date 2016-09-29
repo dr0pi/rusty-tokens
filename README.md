@@ -71,8 +71,8 @@ You can run an example with ```cargo run --example <example-name-here>```
 ## Task List
 
 - [ ] Have on online documentation
-- [ ] Stabilize the configuration
-- [ ] Implement the client side
+- [x] Stabilize the configuration
+- [x] Implement the client side
 
 
 ## Contributing(We need your help!)
