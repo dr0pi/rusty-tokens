@@ -40,7 +40,7 @@ To use it in your project add the following to your ```Cargo.toml```:
 ```
 [dependencies.rusty-tokens]
 git = "https://github.com/zalando-incubator/rusty-tokens.git"
-tag = "v0.1.8"
+tag = "v0.2.0"
 features = ["hyper", "iron"]
 ```
 
