@@ -12,12 +12,17 @@ extern crate http_error_object;
 
 extern crate chrono;
 
+extern crate url;
+
+
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::num::ParseFloatError;
 
 use std::env::VarError;
 
+pub mod jwt;
 pub mod client;
 pub mod resource_server;
 
@@ -28,7 +33,7 @@ pub struct Scope(pub String);
 impl Scope {
     /// Creates a new scope. It allocates a String.
     pub fn from_str(scope: &str) -> Scope {
-        Scope(scope.to_string())
+        Scope(scope.to_owned())
     }
 
     /// Creates a new scope and consumes the String.
@@ -52,7 +57,7 @@ pub struct Token(pub String);
 impl Token {
     /// Creates a new Token. It allocates a String.
     pub fn new(token: &str) -> Token {
-        Token(token.to_string())
+        Token(token.to_owned())
     }
 }
 
@@ -71,7 +76,7 @@ pub struct InitializationError {
 impl InitializationError {
     /// Creates a new InitializationError therby allocating a String.
     fn new(message: &str) -> InitializationError {
-        InitializationError { message: message.to_string() }
+        InitializationError { message: message.to_owned() }
     }
 }
 
@@ -93,6 +98,12 @@ impl Error for InitializationError {
 
 impl From<VarError> for InitializationError {
     fn from(err: VarError) -> Self {
-        InitializationError { message: err.description().to_string() }
+        InitializationError { message: format!{"{}", err} }
+    }
+}
+
+impl From<ParseFloatError> for InitializationError {
+    fn from(err: ParseFloatError) -> Self {
+        InitializationError { message: format!{"{}", err} }
     }
 }

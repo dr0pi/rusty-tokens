@@ -19,6 +19,8 @@ Currenty we are working on implementing the client side.
 
 Clone this repository and run ```cargo build --features "all"```.
 
+You will need to have the ```open-ssl dev``` package for your system to compile the sources.
+
 ## Test
 
 You can run the tests with ```cargo test```.

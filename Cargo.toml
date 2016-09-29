@@ -9,6 +9,7 @@ description = "An authentication and authorization library for Rust in the Zalan
 log = "0.3"
 rustc-serialize = { version = "*" }
 chrono = "0.2"
+url= "1.2.0"
 
 hyper = { version = "0.9", optional = true }
 iron = { version = "0.4", optional = true }

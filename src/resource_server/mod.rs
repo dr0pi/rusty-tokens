@@ -1,4 +1,5 @@
-//! This module is intended to be used if you are a resource server.
+//! This module is intended to be used if you are a resource server
+//! and have to authenticate/authorize clients.
 //!
 //! It proxies an `AuthenticationServer` for you
 //!
@@ -9,6 +10,8 @@
 use std::error::Error;
 use std::fmt;
 use std::collections::HashSet;
+use std::convert::From;
+use std::io;
 use super::{Scope, Token};
 use rustc_serialize::{Decoder, Decodable, json};
 
@@ -52,7 +55,7 @@ impl AuthenticatedUser {
             hs.insert(Scope::from_str(sc));
         }
         AuthenticatedUser {
-            uid: Some(Uid(uid.to_string())),
+            uid: Some(Uid(uid.to_owned())),
             scopes: hs,
         }
     }
@@ -63,7 +66,7 @@ impl AuthenticatedUser {
             Ok(authenticated_user) => Ok(authenticated_user),
             Err(err) => {
                 Err(AuthorizationServerError::TokenInfoUnparsable {
-                    message: err.description().to_string(),
+                    message: err.description().to_owned(),
                 })
             }
         }
@@ -86,7 +89,7 @@ impl AuthenticatedUser {
         } else {
             let uid_part = match self.uid {
                 Some(Uid(ref uid)) => uid.clone(),
-                None => "None".to_string(),
+                None => "None".to_owned(),
             };
             Err(NotAuthorized {
                 message: format!("User with uid {} does not have the scope {}",
@@ -161,6 +164,9 @@ pub enum AuthorizationServerError {
     Unknown {
         message: String,
     },
+    IoError {
+        message: String,
+    },
 }
 
 impl fmt::Display for AuthorizationServerError {
@@ -175,6 +181,7 @@ impl fmt::Display for AuthorizationServerError {
             AuthorizationServerError::Connection { ref message } => {
                 write!(f, "Connection: {}", message)
             }
+            AuthorizationServerError::IoError { ref message } => write!(f, "IOError: {}", message),
             AuthorizationServerError::Unknown { ref message } => write!(f, "Unknown: {}", message),
         }
     }
@@ -183,10 +190,11 @@ impl fmt::Display for AuthorizationServerError {
 impl Error for AuthorizationServerError {
     fn description(&self) -> &str {
         match *self {
-            AuthorizationServerError::NotAuthenticated { ref message } => message.as_ref(),
-            AuthorizationServerError::TokenInfoUnparsable { ref message } => message.as_ref(),
-            AuthorizationServerError::Connection { ref message } => message.as_ref(),
-            AuthorizationServerError::Unknown { ref message } => message.as_ref(),
+            AuthorizationServerError::NotAuthenticated { ref message } |
+            AuthorizationServerError::TokenInfoUnparsable { ref message } |
+            AuthorizationServerError::Connection { ref message } |
+            AuthorizationServerError::Unknown { ref message } |
+            AuthorizationServerError::IoError { ref message } => message.as_ref(),
         }
     }
 
@@ -194,6 +202,13 @@ impl Error for AuthorizationServerError {
         None
     }
 }
+
+impl From<io::Error> for AuthorizationServerError {
+    fn from(err: io::Error) -> Self {
+        AuthorizationServerError::IoError { message: format!("{}", err) }
+    }
+}
+
 
 #[cfg(test)]
 mod test {
@@ -212,7 +227,7 @@ mod test {
         scopes.insert(Scope::from_str("uid"));
         scopes.insert(Scope::from_str("cn"));
         let expected = AuthenticatedUser {
-            uid: Some(Uid("my_app".to_string())),
+            uid: Some(Uid("my_app".to_owned())),
             scopes: scopes,
         };
 
@@ -231,7 +246,7 @@ mod test {
         let mut scopes = HashSet::new();
         scopes.insert(Scope::from_str("uid"));
         let expected = AuthenticatedUser {
-            uid: Some(Uid("my_app".to_string())),
+            uid: Some(Uid("my_app".to_owned())),
             scopes: scopes,
         };
 
@@ -248,7 +263,7 @@ mod test {
         \"uid\":\"my_app\"}";
 
         let expected = AuthenticatedUser {
-            uid: Some(Uid("my_app".to_string())),
+            uid: Some(Uid("my_app".to_owned())),
             scopes: HashSet::new(),
         };
 

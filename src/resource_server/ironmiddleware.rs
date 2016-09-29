@@ -44,7 +44,7 @@ impl<T: AuthorizationServer + Send + Sync + 'static> BeforeMiddleware for Authen
                          error!("Failed to get token info from authorization server: {}", err.description());
                          Err(IronError::new(AuthorizationServerError::NotAuthenticated {
                                                 message: "Could not validate token."
-                                                    .to_string(),
+                                                    .to_owned(),
                                             },
                                             HttpErrorObject::new_iron(&Status::Unauthorized)
                                                 .to_iron_response_triplet()))
@@ -54,7 +54,7 @@ impl<T: AuthorizationServer + Send + Sync + 'static> BeforeMiddleware for Authen
              None => {
                  warn!("No token.");
                  Err(IronError::new(AuthorizationServerError::NotAuthenticated {
-                                        message: "Invalid token".to_string(),
+                                        message: "Invalid token".to_owned(),
                                     },
                                     HttpErrorObject::new_iron(&Status::Unauthorized)
                                         .to_iron_response_triplet()))
