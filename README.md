@@ -7,7 +7,7 @@ An authentication and authorization library for Rust.
 This client part of library is(will be) basically a clone of https://github.com/zalando/go-tokens.
 
 This library can be used if for resource servers or clients that need
-authentication and authorization within the Zalando landscape.
+authentication and authorization.
 
 **Rusty Tokens** uses semantic versioning. So unless 1.0.0 is reached expect many breaking changes.
 
@@ -17,7 +17,7 @@ Currenty we are working on implementing the client side.
 
 ## Build
 
-Clone this repository and run ```cargo build --features "all"```.
+Clone this repository and run ```cargo build```.
 
 You will need to have the ```open-ssl dev``` package for your system to compile the sources.
 
@@ -46,20 +46,26 @@ features = ["hyper", "iron"]
 
 ## Configuration
 
-**Rusty Tokens** uses [dotenv](https://github.com/slapresta/rust-dotenv) for configuration.
-
-That means everything is configurable by using environment variables.
+**Rusty Tokens** is configured by environment variables.
 
 ```
 RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR=RUSTY_TOKENS_TOKEN_INFO_URL
-RUSTY_TOKENS_TOKEN_INFO_URL="www.example.com"
+RUSTY_TOKENS_TOKEN_INFO_URL=hallo
 RUSTY_TOKENS_TOKEN_INFO_URL_QUERY_PARAMETER=tokenInfo
-RUSTY_TOKENS_FALLBACK_TOKEN_INFO_URL="www.example.com"
+RUSTY_TOKENS_FALLBACK_TOKEN_INFO_URL=https://somewhere.else
+
+RUSTY_TOKENS_CREDENTIALS_DIR_ENV_VAR=RUSTY_TOKENS_CREDENTIALS_DIR
+RUSTY_TOKENS_CREDENTIALS_DIR=/home/user/credentials
+RUSTY_TOKENS_USER_CREDENTIALS_FILE_NAME=user.json
+RUSTY_TOKENS_CLIENT_CREDENTIALS_FILE_NAME=client.json
 
 RUSTY_TOKENS_TOKEN_PROVIDER_URL_ENV_VAR=RUSTY_TOKENS_TOKEN_PROVIDER_URL
-RUSTY_TOKENS_TOKEN_PROVIDER_URL="www.example.com"
-RUSTY_TOKENS_TOKEN_PRIVIDER_URL_QUERY_PARAMETER=tokenInfo
-RUSTY_TOKENS_FALLBACK_GENERATE_TOKEN_URL="www.example.com"
+RUSTY_TOKENS_TOKEN_PROVIDER_URL=https:www.example.org
+RUSTY_TOKENS_TOKEN_PROVIDER_REALM=/services
+RUSTY_TOKENS_FALLBACK_TOKEN_PROVIDER_URL=http://somewhere.else
+
+RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR=0.8
+RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR=0.9
 ```
 
 ## Examples
