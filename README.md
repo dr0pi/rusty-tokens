@@ -89,7 +89,7 @@ You can run an example with ```cargo run --example <example-name-here>```
 
 ## Contributing(We need your help!)
 
-We accept contributions from the open-source community. Please see the [issue tracker](https://example.com) for things to work on.
+We accept contributions from the open-source community. Please see the [issue tracker](https://github.com/zalando-incubator/rusty-tokens/issues) for things to work on.
 
 Before making a contribution, please let us know by posting a comment to the relevant issue. And if you would like to propose a new feature, do start a new issue explaining the feature you’d like to contribute.
 
