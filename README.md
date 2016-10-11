@@ -48,7 +48,7 @@ features = ["hyper", "iron"]
 
 **Rusty Tokens** is configured by environment variables.
 
-You wil find the exact descriptions of the environment vars within the documentation.
+You will find the exact descriptions of the environment vars within the documentation.
 
 ```
 # When you are a resource server
