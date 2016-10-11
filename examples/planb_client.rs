@@ -21,17 +21,13 @@ fn main() {
     env::set_var("RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR", "0.8");
     env::set_var("RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR", "0.9");
 
-    let credentials_provider = StaticCredentialsProvider::new(String::from("client_id"),
-                                                              String::from("client_secret"),
-                                                              String::from("user_id"),
-                                                              String::from("user_secret"));
+    let credentials_provider =
+        StaticCredentialsProvider::new("client_id", "client_secret", "user_id", "user_secret");
 
     let hyper_client = hyper::Client::new();
 
-    let managed_token1 = ManagedToken::new(String::from("my_token1"))
-        .with_scope(Scope::from_str("my_scope"));
-    let managed_token2 = ManagedToken::new(String::from("my_token2"))
-        .with_scope(Scope::from_str("my_scope"));
+    let managed_token1 = ManagedToken::new("my_token1").with_scope(Scope::new("my_scope"));
+    let managed_token2 = ManagedToken::new("my_token2").with_scope(Scope::new("my_scope"));
 
     let managed_tokens = vec![managed_token1, managed_token2];
 

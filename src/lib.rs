@@ -14,8 +14,7 @@ extern crate chrono;
 
 extern crate url;
 
-
-use std::convert::From;
+use std::convert::{Into, From};
 use std::error::Error;
 use std::fmt;
 use std::num::ParseFloatError;
@@ -31,14 +30,9 @@ pub mod resource_server;
 pub struct Scope(pub String);
 
 impl Scope {
-    /// Creates a new scope. It allocates a String.
-    pub fn from_str(scope: &str) -> Scope {
-        Scope(scope.to_owned())
-    }
-
-    /// Creates a new scope and consumes the String.
-    pub fn new(scope: String) -> Scope {
-        Scope(scope)
+    /// Creates a new scope.
+    pub fn new<T: Into<String>>(scope: T) -> Scope {
+        Scope(scope.into())
     }
 }
 
@@ -56,8 +50,8 @@ pub struct Token(pub String);
 
 impl Token {
     /// Creates a new Token. It allocates a String.
-    pub fn new(token: &str) -> Token {
-        Token(token.to_owned())
+    pub fn new<T: Into<String>>(token: T) -> Token {
+        Token(token.into())
     }
 }
 
@@ -75,8 +69,8 @@ pub struct InitializationError {
 
 impl InitializationError {
     /// Creates a new InitializationError therby allocating a String.
-    fn new(message: &str) -> InitializationError {
-        InitializationError { message: message.to_owned() }
+    fn new<T: Into<String>>(message: T) -> InitializationError {
+        InitializationError { message: message.into() }
     }
 }
 

@@ -199,12 +199,12 @@ mod test {
     use jwt;
     use jwt::{RegisteredHeader, Header, Claim, RegisteredClaim};
 
-    const sample_token: &'static str = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ.\
+    const SAMPLE_TOKEN: &'static str = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ.\
                                         eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ.\
                                         KmDsVB09RAOYwT0Y6E9tdQpg0rAPd8SExYhcZ9tXEO6y9AWX4wBylnmNHVoetWu7MwoexWkaKdpKk09IodMVug";
 
-    const sample_header_json: &'static str = "{\"kid\":\"testkey-es256\",\"alg\":\"ES256\"}";
-    const sample_payload_json: &'static str = "{\"sub\":\"test2\",\"scope\":[\"cn\"],\"iss\":\
+    const SAMPLE_HEADER_JSON: &'static str = "{\"kid\":\"testkey-es256\",\"alg\":\"ES256\"}";
+    const SAMPLE_PAYLOAD_JSON: &'static str = "{\"sub\":\"test2\",\"scope\":[\"cn\"],\"iss\":\
                                                \"B\",\"realm\":\"/services\",\"exp\":1457319814,\
                                                \"iat\":1457291014}";
 
@@ -212,19 +212,19 @@ mod test {
     fn must_decode_base_64_header_to_a_string() {
         let sample = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ";
         let result = jwt::decode_base_64_string(sample).unwrap();
-        assert_eq!(sample_header_json, result);
+        assert_eq!(SAMPLE_HEADER_JSON, result);
     }
 
     #[test]
     fn must_decode_base_64_payload_to_a_string() {
         let sample = "eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ";
         let result = jwt::decode_base_64_string(sample).unwrap();
-        assert_eq!(sample_payload_json, result);
+        assert_eq!(SAMPLE_PAYLOAD_JSON, result);
     }
 
     #[test]
     fn split_data_segments_must_work() {
-        let sample = sample_token;
+        let sample = SAMPLE_TOKEN;
         let expected = ("eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ",
                         "eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ");
 
@@ -235,8 +235,8 @@ mod test {
 
     #[test]
     fn decode_data_segments_must_work() {
-        let sample = sample_token;
-        let expected = (sample_header_json.to_owned(), sample_payload_json.to_owned());
+        let sample = SAMPLE_TOKEN;
+        let expected = (SAMPLE_HEADER_JSON.to_owned(), SAMPLE_PAYLOAD_JSON.to_owned());
 
         let result = jwt::decode_data_segments(sample).unwrap();
 
@@ -245,7 +245,7 @@ mod test {
 
     #[test]
     fn parse_the_token() {
-        let sample = sample_token;
+        let sample = SAMPLE_TOKEN;
         let expected = jwt::JsonWebToken::new()
             .add_header(&Header::Registered(RegisteredHeader::KeyId),
                         Json::String(String::from("testkey-es256")))

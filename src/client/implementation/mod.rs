@@ -44,8 +44,10 @@ impl SelfUpdatingTokenManagerConfig {
     ///
     /// Environment vars used:
     ///
-    /// * `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after which a new one will be requested.
-    /// * `RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR`(mandatory): The percentage of the lifetime of the `Token` after a warning will be logged.
+    /// * `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`(mandatory): The percentage of the lifetime
+    /// of the `Token` after which a new one will be requested.
+    /// * `RUSTY_TOKENS_TOKEN_MANAGER_WARNING_FACTOR`(mandatory): The percentage of the lifetime
+    /// of the `Token` after a warning will be logged.
     /// Should be greater than `RUSTY_TOKENS_TOKEN_MANAGER_REFRESH_FACTOR`.
     pub fn new_from_env(managed_tokens: Vec<ManagedToken>)
                         -> Result<SelfUpdatingTokenManagerConfig, InitializationError> {
@@ -203,9 +205,7 @@ impl From<DecoderError> for RequestAccessTokenError {
 #[cfg(test)]
 mod test {
     extern crate env_logger;
-    use std::collections::HashMap;
     use std::thread;
-    use std::sync::{Arc, RwLock};
     use std::cell::Cell;
     use std::time::Duration as TDuration;
 
@@ -216,7 +216,7 @@ mod test {
     use Token;
     use client::{ManagedToken, TokenManager, SelfUpdatingTokenManager,
                  SelfUpdatingTokenManagerConfig, TokenResult};
-    use client::credentials::{Credentials, CredentialsPair, StaticCredentialsProvider};
+    use client::credentials::{CredentialsPair, StaticCredentialsProvider};
     use client::implementation::{AccessToken, AccessTokenProvider, RequestAccessTokenResult,
                                  RequestAccessTokenError};
     // use super::{TokenData, update_token_data, manager_loop};
@@ -259,8 +259,7 @@ mod test {
 
         let refresh_percentage_threshold = 0.5f32;
         let warning_percentage_threshold = 1.0f32;
-        let managed_token = ManagedToken::new("my_token".to_owned())
-            .with_scope(Scope::from_str("test"));
+        let managed_token = ManagedToken::new("my_token").with_scope(Scope::new("test"));
 
         let config = SelfUpdatingTokenManagerConfig {
             refresh_percentage_threshold: refresh_percentage_threshold,
@@ -337,8 +336,7 @@ mod test {
 
         let refresh_percentage_threshold = 0.5f32;
         let warning_percentage_threshold = 1.0f32;
-        let managed_token = ManagedToken::new("my_token".to_owned())
-            .with_scope(Scope::from_str("test"));
+        let managed_token = ManagedToken::new("my_token").with_scope(Scope::new("test"));
 
         let config = SelfUpdatingTokenManagerConfig {
             refresh_percentage_threshold: refresh_percentage_threshold,

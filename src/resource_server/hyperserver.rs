@@ -24,11 +24,17 @@ pub struct AuthorizationHyperServer {
 
 impl AuthorizationHyperServer {
     /// Create a new instance
-    pub fn new(http_client: Client,
-               token_info_url: String,
-               query_parameter: String,
-               fallback_token_info_url: Option<String>)
-               -> Result<AuthorizationHyperServer, InitializationError> {
+    #[must_use]
+    pub fn new<T, U>(http_client: Client,
+                     token_info_url: T,
+                     query_parameter: U)
+                     -> Result<AuthorizationHyperServer, InitializationError>
+        where T: Into<String>,
+              U: Into<String>
+    {
+
+        let token_info_url = token_info_url.into();
+        let query_parameter = query_parameter.into();
 
         if token_info_url.is_empty() {
             return Err(InitializationError::new("token_info_url may ot be empty."));
@@ -40,22 +46,15 @@ impl AuthorizationHyperServer {
 
         info!("token_info_url: {}", &token_info_url);
         info!("query_parameter: {}", &query_parameter);
-        info!("fallback_token_info_url: {:?}", fallback_token_info_url);
 
         info!("The complete token_info_url is: \"{}?{}={{YOUR_TOKEN_HERE}}\"",
               &token_info_url,
               &query_parameter);
 
-        for url in fallback_token_info_url.iter() {
-            info!("The complete fallback_token_info_url is: \"{}?{}={{YOUR_TOKEN_HERE}}\"",
-                  url,
-                  &query_parameter);
-        }
-
         Ok(AuthorizationHyperServer {
             http_client: http_client,
             token_info_url: token_info_url,
-            fallback_token_info_url: fallback_token_info_url,
+            fallback_token_info_url: None,
             query_parameter: query_parameter,
         })
     }
@@ -70,6 +69,7 @@ impl AuthorizationHyperServer {
     /// If `RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR` is not set, this var is mandatory.
     /// * `RUSTY_TOKENS_TOKEN_INFO_URL_QUERY_PARAMETER`(mandatory): The name of the query parameter used for the token info URL and the fallback URL if set.
     /// * `RUSTY_TOKENS_FALLBACK_TOKEN_INFO_URL`(optional): A fallback token info URL to be used if the primary one fails.
+    #[must_use]
     pub fn from_env(http_client: Client) -> Result<AuthorizationHyperServer, InitializationError> {
         let token_info_url = match env::var("RUSTY_TOKENS_TOKEN_INFO_URL_ENV_VAR") {
             Ok(value) => {
@@ -98,10 +98,25 @@ impl AuthorizationHyperServer {
 
         let query_parameter = try!{env::var("RUSTY_TOKENS_TOKEN_INFO_URL_QUERY_PARAMETER")};
 
-        AuthorizationHyperServer::new(http_client,
-                                      token_info_url,
-                                      query_parameter,
-                                      fallback_token_info_url)
+        AuthorizationHyperServer::new(http_client, token_info_url, query_parameter)
+            .and_then(|server| match fallback_token_info_url {
+                Some(ref fbu) => server.with_fallback_token_info_url(fbu.as_ref()),
+                None => Ok(server),
+            })
+    }
+
+    pub fn with_fallback_token_info_url<T: Into<String>>
+        (self,
+         fallback_token_info_url: T)
+         -> Result<AuthorizationHyperServer, InitializationError> {
+        let url = fallback_token_info_url.into();
+        info!("The complete fallback_token_info_url is: \"{}?{}={{YOUR_TOKEN_HERE}}\"",
+              &url,
+              &self.query_parameter);
+        let mut x = self;
+        x.fallback_token_info_url = Some(url);
+
+        Ok(x)
     }
 
     fn request_token_info(&self, token: &Token) -> Result<Response, AuthorizationServerError> {

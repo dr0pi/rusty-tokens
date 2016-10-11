@@ -4,7 +4,7 @@
 //! You can use a `TokenManager` to manage multiple tokens.
 //! A `TokenManager` is manages `Tokens` configured by using `ManagedToken`s
 //! which have a name by which you can lookup a `Token`.
-use std::convert::From;
+use std::convert::{Into, From};
 use super::{Token, Scope};
 use client::credentials::CredentialsError;
 
@@ -30,9 +30,9 @@ pub struct ManagedToken {
 
 impl ManagedToken {
     /// Create a new empty `ManagedToken` without any `Scopes`.
-    pub fn new(name: String) -> Self {
+    pub fn new<T: Into<String>>(name: T) -> Self {
         ManagedToken {
-            name: name,
+            name: name.into(),
             scopes: Vec::new(),
         }
     }
