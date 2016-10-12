@@ -34,7 +34,7 @@ fn update_token_data_should_update_the_token() {
     let refresh_percentage_threshold = 0.5f32;
     let warning_percentage_threshold = 1.0f32;
 
-    let scopes = vec![Scope(String::from("sc"))];
+    let scopes = vec![Scope::new("sc")];
 
 
 
@@ -48,7 +48,7 @@ fn update_token_data_should_update_the_token() {
     };
 
     let sample_access_token = AccessToken {
-        token: Token(String::from("token")),
+        token: Token::new("token"),
         issued_at_utc: now.naive_utc() - Duration::seconds(60),
         valid_until_utc: now.naive_utc() + Duration::seconds(60),
     };
@@ -76,7 +76,7 @@ fn update_token_data_should_update_the_token() {
 
     let expected = TokenData {
         token_name: "token_data",
-        token: Some(Token(String::from("token"))),
+        token: Some(Token::new("token")),
         update_latest: (used_timestamp.naive_utc() + Duration::seconds(30)).timestamp(),
         valid_until: (now.naive_utc() + Duration::seconds(60)).timestamp(),
         warn_after: (used_timestamp.naive_utc() + Duration::seconds(60)).timestamp(),
@@ -92,7 +92,7 @@ fn update_token_data_should_not_update_the_token_when_the_acess_token_provider_f
     let refresh_percentage_threshold = 0.5f32;
     let warning_percentage_threshold = 1.0f32;
 
-    let scopes = vec![Scope(String::from("sc"))];
+    let scopes = vec![Scope::new("sc")];
 
     let mut sample_token_data = TokenData {
         token_name: "token_data",
@@ -170,17 +170,17 @@ fn basic_loop_iteration() {
 
 
     let sample_access_tokens = vec![Ok(AccessToken {
-                                        token: Token(String::from("token_1")),
+                                        token: Token::new("token_1"),
                                         issued_at_utc: now.naive_utc() - Duration::seconds(0),
                                         valid_until_utc: now.naive_utc() + Duration::seconds(10),
                                     }),
                                     Ok(AccessToken {
-                                        token: Token(String::from("token_2")),
+                                        token: Token::new("token_2"),
                                         issued_at_utc: now.naive_utc() - Duration::seconds(20),
                                         valid_until_utc: now.naive_utc() + Duration::seconds(20),
                                     }),
                                     Ok(AccessToken {
-                                        token: Token(String::from("token_3")),
+                                        token: Token::new("token_3"),
                                         issued_at_utc: now.naive_utc() - Duration::seconds(30),
                                         valid_until_utc: now.naive_utc() + Duration::seconds(30),
                                     })];

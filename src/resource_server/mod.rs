@@ -55,7 +55,9 @@ pub struct AuthenticatedUser {
 
 impl AuthenticatedUser {
     /// Convinience method for creating an AuthenticatedUser. Be aware, that the params are not "typesafe".
-    pub fn from_strings(uid: &str, scopes: &[&str]) -> AuthenticatedUser {
+    pub fn from_strings<T>(uid: T, scopes: &[&str]) -> AuthenticatedUser
+        where T: Into<String>
+    {
         let mut hs = HashSet::new();
         for sc in scopes {
             hs.insert(Scope::new(*sc));
@@ -131,7 +133,13 @@ impl Decodable for AuthenticatedUser {
 /// An Error signaling that an authorization failed.
 #[derive(Debug)]
 pub struct NotAuthorized {
-    message: String,
+    pub message: String,
+}
+
+impl NotAuthorized {
+    pub fn new<T: Into<String>>(msg: T) -> NotAuthorized {
+        NotAuthorized { message: msg.into() }
+    }
 }
 
 impl fmt::Display for NotAuthorized {

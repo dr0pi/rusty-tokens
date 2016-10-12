@@ -69,7 +69,7 @@ pub struct InitializationError {
 
 impl InitializationError {
     /// Creates a new InitializationError therby allocating a String.
-    fn new<T: Into<String>>(message: T) -> InitializationError {
+    pub fn new<T: Into<String>>(message: T) -> InitializationError {
         InitializationError { message: message.into() }
     }
 }
