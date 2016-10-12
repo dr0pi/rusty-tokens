@@ -10,7 +10,7 @@
 use std::error::Error;
 use std::fmt;
 use std::collections::HashSet;
-use std::convert::From;
+use std::convert::{Into, From};
 use std::io;
 use super::{Scope, Token};
 use rustc_serialize::{Decoder, Decodable, json};
@@ -32,7 +32,13 @@ pub trait AuthorizationServer {
 
 /// An id that uniquely identifies the owner of a resource
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
-pub struct Uid(String);
+pub struct Uid(pub String);
+
+impl Uid {
+    pub fn new<T: Into<String>>(uid: T) -> Uid {
+        Uid(uid.into())
+    }
+}
 
 impl fmt::Display for Uid {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -49,13 +55,15 @@ pub struct AuthenticatedUser {
 
 impl AuthenticatedUser {
     /// Convinience method for creating an AuthenticatedUser. Be aware, that the params are not "typesafe".
-    pub fn from_strings(uid: &str, scopes: &[&str]) -> AuthenticatedUser {
+    pub fn from_strings<T>(uid: T, scopes: &[&str]) -> AuthenticatedUser
+        where T: Into<String>
+    {
         let mut hs = HashSet::new();
         for sc in scopes {
-            hs.insert(Scope::from_str(sc));
+            hs.insert(Scope::new(*sc));
         }
         AuthenticatedUser {
-            uid: Some(Uid(uid.to_owned())),
+            uid: Some(Uid::new(uid)),
             scopes: hs,
         }
     }
@@ -125,7 +133,13 @@ impl Decodable for AuthenticatedUser {
 /// An Error signaling that an authorization failed.
 #[derive(Debug)]
 pub struct NotAuthorized {
-    message: String,
+    pub message: String,
+}
+
+impl NotAuthorized {
+    pub fn new<T: Into<String>>(msg: T) -> NotAuthorized {
+        NotAuthorized { message: msg.into() }
+    }
 }
 
 impl fmt::Display for NotAuthorized {
@@ -224,10 +238,10 @@ mod test {
         \"uid\":\"my_app\"}";
 
         let mut scopes = HashSet::new();
-        scopes.insert(Scope::from_str("uid"));
-        scopes.insert(Scope::from_str("cn"));
+        scopes.insert(Scope::new("uid"));
+        scopes.insert(Scope::new("cn"));
         let expected = AuthenticatedUser {
-            uid: Some(Uid("my_app".to_owned())),
+            uid: Some(Uid::new("my_app")),
             scopes: scopes,
         };
 
@@ -244,9 +258,9 @@ mod test {
         \"uid\":\"my_app\"}";
 
         let mut scopes = HashSet::new();
-        scopes.insert(Scope::from_str("uid"));
+        scopes.insert(Scope::new("uid"));
         let expected = AuthenticatedUser {
-            uid: Some(Uid("my_app".to_owned())),
+            uid: Some(Uid::new("my_app")),
             scopes: scopes,
         };
 
@@ -263,7 +277,7 @@ mod test {
         \"uid\":\"my_app\"}";
 
         let expected = AuthenticatedUser {
-            uid: Some(Uid("my_app".to_owned())),
+            uid: Some(Uid::new("my_app")),
             scopes: HashSet::new(),
         };
 

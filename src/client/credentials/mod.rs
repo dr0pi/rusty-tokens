@@ -1,6 +1,6 @@
 //! `Credentials` are needed to receive a token from the `TokenProvider`.
 use std::io;
-use std::convert::From;
+use std::convert::{Into, From};
 use std::error::Error;
 use std::fmt;
 
@@ -22,6 +22,18 @@ pub struct Credentials {
     pub id: String,
     /// The secret to authenticate
     pub secret: String,
+}
+
+impl Credentials {
+    pub fn new<T, U>(id: T, secret: U) -> Credentials
+        where T: Into<String>,
+              U: Into<String>
+    {
+        Credentials {
+            id: id.into(),
+            secret: secret.into(),
+        }
+    }
 }
 
 /// The token provider requires two credentials.

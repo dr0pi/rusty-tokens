@@ -2,6 +2,7 @@ use std::thread::JoinHandle;
 use std::io::Read;
 use std::env;
 use std::str::FromStr;
+use std::convert::Into;
 use url::form_urlencoded;
 use hyper;
 use hyper::header::{Headers, Authorization, Basic, ContentType};
@@ -23,15 +24,13 @@ impl HyperTokenManager {
     pub fn new<U>(config: SelfUpdatingTokenManagerConfig,
                   http_client: hyper::Client,
                   credentials_provider: U,
-                  url: String,
-                  realm: String)
+                  url: &str,
+                  realm: &str)
                   -> Result<(SelfUpdatingTokenManager, JoinHandle<()>), InitializationError>
         where U: CredentialsPairProvider + Send + 'static
     {
-        let acccess_token_provider = HyperAccessTokenProvider {
-            client: http_client,
-            full_url_with_realm: format!("{}?realm={}", url, realm),
-        };
+        let acccess_token_provider =
+            HyperAccessTokenProvider::new(http_client, format!("{}?realm={}", url, realm));
         SelfUpdatingTokenManager::new(config, credentials_provider, acccess_token_provider)
     }
 
@@ -59,7 +58,7 @@ impl HyperTokenManager {
         let config = try!{SelfUpdatingTokenManagerConfig::new_from_env(managed_tokens)};
         let url = try!{get_token_provider_url_from_env()};
         let realm = try!{env::var("RUSTY_TOKENS_TOKEN_PROVIDER_REALM")};
-        HyperTokenManager::new(config, http_client, credentials_provider, url, realm)
+        HyperTokenManager::new(config, http_client, credentials_provider, &url, &realm)
     }
 
     /// Creates a new instance from environment variables. The used `CredentialsProvider` is
@@ -86,7 +85,7 @@ impl HyperTokenManager {
         let realm = try!{env::var("RUSTY_TOKENS_TOKEN_PROVIDER_REALM")};
         let credentials_provider = try!{FileCredentialsProvider::new_from_env()};
 
-        HyperTokenManager::new(config, http_client, credentials_provider, url, realm)
+        HyperTokenManager::new(config, http_client, credentials_provider, &url, &realm)
     }
 }
 
@@ -96,12 +95,21 @@ struct HyperAccessTokenProvider {
 }
 
 #[derive(RustcDecodable, Debug)]
-struct PlanBAccesTokenResponse {
+struct PlanBAccessTokenResponse {
     access_token: String,
     expires_in: u64,
 }
 
 impl HyperAccessTokenProvider {
+    pub fn new<T: Into<String>>(client: hyper::Client,
+                                full_url_with_realm: T)
+                                -> HyperAccessTokenProvider {
+        HyperAccessTokenProvider {
+            client: client,
+            full_url_with_realm: full_url_with_realm.into(),
+        }
+    }
+
     fn request_access_token(&self,
                             scopes: &[Scope],
                             credentials: &CredentialsPair)
@@ -184,7 +192,7 @@ fn evaluate_response(response: &mut Response) -> RequestAccessTokenResult {
         StatusCode::Ok => {
             let mut buf = String::new();
             let _ = try!{response.read_to_string(&mut buf)};
-            let decoded_response = try!{json::decode::<PlanBAccesTokenResponse>(&buf)};
+            let decoded_response = try!{json::decode::<PlanBAccessTokenResponse>(&buf)};
             debug!("Received a token that expires in {} seconds",
                    decoded_response.expires_in);
             let planb_token = try!{PlanbToken::from_str(&decoded_response.access_token).map_err(|err|

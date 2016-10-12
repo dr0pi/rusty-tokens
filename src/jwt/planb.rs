@@ -119,13 +119,13 @@ mod test {
     use std::str::FromStr;
     use chrono::{NaiveDate, NaiveTime, NaiveDateTime};
 
-    const sample_token: &'static str = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ.\
+    const SAMPLE_TOKEN: &'static str = "eyJraWQiOiJ0ZXN0a2V5LWVzMjU2IiwiYWxnIjoiRVMyNTYifQ.\
                                         eyJzdWIiOiJ0ZXN0MiIsInNjb3BlIjpbImNuIl0sImlzcyI6IkIiLCJyZWFsbSI6Ii9zZXJ2aWNlcyIsImV4cCI6MTQ1NzMxOTgxNCwiaWF0IjoxNDU3MjkxMDE0fQ.\
                                         KmDsVB09RAOYwT0Y6E9tdQpg0rAPd8SExYhcZ9tXEO6y9AWX4wBylnmNHVoetWu7MwoexWkaKdpKk09IodMVug";
 
     #[test]
     fn parse_the_token() {
-        let sample = sample_token;
+        let sample = SAMPLE_TOKEN;
         let expected =
             PlanbToken::new(PlanbHeader {
                                 key_id: String::from("testkey-es256"),

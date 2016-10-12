@@ -55,14 +55,14 @@ fn update_token_data_with_access_token_must_create_the_correct_result() {
     };
 
     let sample_access_token = AccessToken {
-        token: Token(String::from("token")),
+        token: Token::new("token"),
         issued_at_utc: NaiveDateTime::from_timestamp(50, 0),
         valid_until_utc: NaiveDateTime::from_timestamp(200, 0),
     };
 
     let expected = TokenData {
         token_name: "token_data",
-        token: Some(Token(String::from("token"))),
+        token: Some(Token::new("token")),
         update_latest: 160,
         valid_until: 200,
         warn_after: 180,
