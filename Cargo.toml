@@ -1,10 +1,15 @@
 [package]
 name = "rusty-tokens"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Jannic Hartwecker <jannic.hartwecker@zalando.de>", "Christian Douven <christian.douven@zalando.de>"]
 license = "MIT"
 description = "An authentication and authorization library for Rust in the Zalando landscape."
 keywords = ["OAUTH2", "JWT", "PlanB"]
+
+[features]
+default = ["with-hyper"]
+with-hyper = ["hyper", "http-error-object/with-hyper"]
+with-iron = ["iron", "http-error-object/with-iron"]
 
 [dependencies]
 log = "0.3"
@@ -17,7 +22,7 @@ iron = { version = "0.4", optional = true }
 
 [dependencies.http-error-object]
 git = "https://github.com/zalando-incubator/http-error-object-rs.git"
-tag = "v0.1.5"
+tag = "v0.1.6"
 
 [dev-dependencies]
 env_logger = "0.3"

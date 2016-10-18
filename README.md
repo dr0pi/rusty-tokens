@@ -17,13 +17,13 @@ Client and resource server side are implemented. JWT lib has to be streamlined.
 
 ## Build
 
-Clone this repository and run ```cargo build --features "hyper iron http-error-object/iron http-error-object/hyper```.
+Clone this repository and run ```cargo build --features "with-iron"```.
 
 You will need to have the ```open-ssl dev``` package for your system to compile the sources.
 
 ## Test
 
-You can run the tests with ```cargo test --features "hyper iron http-error-object/iron http-error-object/hyper```.
+You can run the tests with ```cargo test --features "with-iron```.
 
 ## Documentation
 
@@ -40,7 +40,7 @@ To use it in your project add the following to your ```Cargo.toml```:
 ```
 [dependencies.rusty-tokens]
 git = "https://github.com/zalando-incubator/rusty-tokens.git"
-tag = "v0.2.1"
+tag = "v0.2.2"
 features = ["hyper", "iron"]
 ```
 
