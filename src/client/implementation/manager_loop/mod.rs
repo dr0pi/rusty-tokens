@@ -117,7 +117,7 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
                                   err);
                         } else {
                             error!("Could not update expired({}) token {}: {}",
-                            NaiveDateTime::from_num_seconds_from_unix_epoch(token_data.valid_until, 0),
+                                   NaiveDateTime::from_timestamp(token_data.valid_until, 0),
                                    token_data.token_name,
                                    err);
                             token_states_to_update.push((token_data.token_name,
@@ -129,8 +129,8 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
             if token_data.warn_after < now {
                 warn!("Token {} becomes to old(valid until {}, update latest was {}).",
                       &token_data.token_name,
-                      NaiveDateTime::from_num_seconds_from_unix_epoch(token_data.valid_until, 0),
-                      NaiveDateTime::from_num_seconds_from_unix_epoch(token_data.update_latest, 0));
+                      NaiveDateTime::from_timestamp(token_data.valid_until, 0),
+                      NaiveDateTime::from_timestamp(token_data.update_latest, 0));
             }
 
             next_update_at = min(next_update_at, token_data.update_latest);

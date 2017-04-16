@@ -1,6 +1,6 @@
 [package]
 name = "rusty-tokens"
-version = "0.2.6"
+version = "0.2.7"
 authors = ["Jannic Hartwecker <jannic.hartwecker@zalando.de>", "Christian Douven <christian.douven@zalando.de>"]
 license = "MIT"
 description = "An authentication and authorization library for Rust in the Zalando landscape."
@@ -14,8 +14,8 @@ with-iron = ["iron", "http-error-object/with-iron"]
 [dependencies]
 log = "0.3"
 rustc-serialize = { version = "*" }
-chrono = "0.2"
-url= "1.2"
+chrono = "0.3"
+url= "1.4"
 
 hyper = { version = "0.10", optional = true }
 iron = { version = "0.5", optional = true }
