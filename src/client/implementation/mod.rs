@@ -142,10 +142,7 @@ pub enum RequestAccessTokenError {
     InternalError(String),
     ConnectionError(String),
     IoError(String),
-    RequestError {
-        status: u16,
-        body: String,
-    },
+    RequestError { status: u16, body: String },
     InvalidCredentials(String),
     ParsingError(String),
 }
@@ -161,10 +158,10 @@ impl fmt::Display for RequestAccessTokenError {
             }
             RequestAccessTokenError::IoError(ref message) => write!(f, "IoError: {}", message),
             RequestAccessTokenError::RequestError { ref status, ref body } => {
-                write!(f, "A request failed with status code{}: {}", status, body)
+                write!(f, "A request failed with status code {}: {}", status, body)
             }
             RequestAccessTokenError::InvalidCredentials(ref message) => {
-                write!(f, "InvalidCredentials: {}", message)
+                write!(f, "Invalid credentials: {}", message)
             }
             RequestAccessTokenError::ParsingError(ref message) => {
                 write!(f, "ParsingError: {}", message)

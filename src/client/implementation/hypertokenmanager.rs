@@ -203,6 +203,11 @@ fn evaluate_response(response: &mut Response) -> RequestAccessTokenResult {
                 valid_until_utc: planb_token.payload.expiration_date_utc,
             })
         }
+        StatusCode::Unauthorized => {
+            Err(RequestAccessTokenError::InvalidCredentials(format!("Token service said: \
+                                                                     401-Unauthorized. Maybe I \
+                                                                     have wrong credentials?")))
+        }
         status => {
             let mut buf = String::new();
             let _ = try!{response.read_to_string(&mut buf)};
