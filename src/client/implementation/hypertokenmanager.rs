@@ -164,16 +164,12 @@ impl HyperAccessTokenProvider {
         headers.set(Authorization(Basic {
             username: credentials.user_credentials.id.clone(),
             password: Some(credentials.user_credentials.secret.clone()),
-//            username: credentials.client_credentials.id.clone(),
-//            password: Some(credentials.client_credentials.secret.clone()),
         }));
         headers.set(ContentType::form_url_encoded());
         let form_encoded = form_urlencoded::Serializer::new(String::new())
             .append_pair("grant_type", "password")
             .append_pair("username", &credentials.client_credentials.id)
             .append_pair("password", &credentials.client_credentials.secret)
-//            .append_pair("username", &credentials.user_credentials.id)
-//            .append_pair("password", &credentials.user_credentials.secret)
             .append_pair("scope", &scope_vec.join(" "))
             .finish();
 

@@ -138,8 +138,9 @@ fn manager_loop<T, U>(manager_state: Arc<RwLock<HashMap<String, TokenResult>>>,
 
         if !token_states_to_update.is_empty() {
             let mut unlocked_manager_state = manager_state.write().unwrap();
-            for to_update in &token_states_to_update {
-                unlocked_manager_state.insert(to_update.0.to_owned(), to_update.1.clone());
+            for &(ref name, ref state) in &token_states_to_update {
+                info!("Refreshing token '{}'.", name);
+                unlocked_manager_state.insert(name.to_string(), state.clone());
             }
         }
 
