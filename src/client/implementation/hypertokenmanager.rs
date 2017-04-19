@@ -3,6 +3,8 @@ use std::io::Read;
 use std::env;
 use std::str::FromStr;
 use std::convert::Into;
+use std::thread;
+use std::time::Duration;
 use url::form_urlencoded;
 use hyper;
 use hyper::header::{Headers, Authorization, Basic, ContentType};
@@ -138,7 +140,8 @@ impl HyperAccessTokenProvider {
             match result {
                 Ok(res) => Ok(res),
                 Err(err) => {
-                    warn!("Failed to request access token: {}", err);
+                    warn!("Failed to request access token(connection error): {}", err);
+                    thread::sleep(Duration::from_millis(30));
                     self.execute_http_request_with_multiple_attempts(scopes,
                                                                      credentials,
                                                                      attempts - 1,
@@ -159,14 +162,14 @@ impl HyperAccessTokenProvider {
             scope_vec.push(scope.0.clone());
         }
         headers.set(Authorization(Basic {
-            username: credentials.client_credentials.id.clone(),
-            password: Some(credentials.client_credentials.secret.clone()),
+            username: credentials.user_credentials.id.clone(),
+            password: Some(credentials.user_credentials.secret.clone()),
         }));
         headers.set(ContentType::form_url_encoded());
         let form_encoded = form_urlencoded::Serializer::new(String::new())
             .append_pair("grant_type", "password")
-            .append_pair("username", &credentials.user_credentials.id)
-            .append_pair("password", &credentials.user_credentials.secret)
+            .append_pair("username", &credentials.client_credentials.id)
+            .append_pair("password", &credentials.client_credentials.secret)
             .append_pair("scope", &scope_vec.join(" "))
             .finish();
 
@@ -202,6 +205,11 @@ fn evaluate_response(response: &mut Response) -> RequestAccessTokenResult {
                 issued_at_utc: planb_token.payload.issue_date_utc,
                 valid_until_utc: planb_token.payload.expiration_date_utc,
             })
+        }
+        StatusCode::Unauthorized => {
+            Err(RequestAccessTokenError::InvalidCredentials(format!("Token service said: \
+                                                                     401-Unauthorized. Maybe I \
+                                                                     have wrong credentials?")))
         }
         status => {
             let mut buf = String::new();
