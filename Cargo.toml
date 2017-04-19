@@ -1,6 +1,6 @@
 [package]
 name = "rusty-tokens"
-version = "0.2.7"
+version = "0.3.0"
 authors = ["Jannic Hartwecker <jannic.hartwecker@zalando.de>", "Christian Douven <christian.douven@zalando.de>"]
 license = "MIT"
 description = "An authentication and authorization library for Rust in the Zalando landscape."
